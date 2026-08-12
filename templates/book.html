@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EV Charging Station Finder</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo">
+        ⚡ EV Charging station Finder
+    </div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        
+        <a href="/features">Features</a>
+        <a href="/contact">Contact</a>
+    </nav>
+
+    <div class="header-buttons">
+        <a href="/login">Login</a>
+        <a href="/register" class="register">Register</a>
+    </div>
+
+</header>
+
+<body>
+
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                alert("{{ message }}");
+            </script>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+
+<div class="booking-container">
+
+    <h2>Book Charging Slot</h2>
+
+    <form method="POST">
+
+        <label>Vehicle Number</label>
+
+        <input type="text"
+               name="vehicle_number"
+               required>
+
+
+        <label>Booking Date</label>
+
+        <input type="date"
+               id="booking_date"
+               name="booking_date"
+               required>
+
+
+        <label>Booking Time</label>
+
+        <input type="time"
+               id="booking_time"
+               name="booking_time"
+               required>
+
+
+        <p class="booking-note">
+            Booking time must be at least 3 hours from the current time.
+        </p>
+
+
+        <button type="submit">
+            Confirm Booking
+        </button>
+
+    </form>
+
+</div>
+
+
+<script>
+
+const dateInput = document.getElementById("booking_date");
+const timeInput = document.getElementById("booking_time");
+
+const now = new Date();
+
+
+const minimumTime = new Date(
+    now.getTime() + (3 * 60 * 60 * 1000)
+);
+
+
+
+const year = minimumTime.getFullYear();
+
+const month = String(
+    minimumTime.getMonth() + 1
+).padStart(2, '0');
+
+const day = String(
+    minimumTime.getDate()
+).padStart(2, '0');
+
+const minimumDate = `${year}-${month}-${day}`;
+
+
+
+dateInput.min = minimumDate;
+
+
+
+dateInput.addEventListener("change", function () {
+
+    if (dateInput.value === minimumDate) {
+
+        const hours = String(
+            minimumTime.getHours()
+        ).padStart(2, '0');
+
+        const minutes = String(
+            minimumTime.getMinutes()
+        ).padStart(2, '0');
+
+        timeInput.min = `${hours}:${minutes}`;
+
+    } else {
+
+        timeInput.removeAttribute("min");
+
+    }
+
+});
+
+</script>
+<footer class="footer">
+
+<div class="footer-content">
+
+<div class="footer-section">
+
+<h3>EV Charging Station Finder</h3>
+
+<p>
+Helping EV owners find nearby charging stations,
+book slots online and save time.
+</p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Quick Links</h3>
+
+<p><a href="/">Home</a></p>
+<p><a href="/login">User Login</a></p>
+<p><a href="/register">Register</a></p>
+<p><a href="/admin_login">Admin Login</a></p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Contact Us</h3>
+
+<p>📧 support@evfinder.com</p>
+
+<p>📞 +91 9876543210</p>
+
+<p>📍 Bengaluru, India</p>
+
+</div>
+
+</div>
+
+<hr>
+
+<p class="copyright">
+@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved.
+</p>
+
+</footer>
+</body>
+</html>

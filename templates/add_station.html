@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EV Charging Station Finder</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo">
+        ⚡ EV Charging station Finder
+    </div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        
+        <a href="/features">Features</a>
+        <a href="/contact">Contact</a>
+    </nav>
+
+    <div class="header-buttons">
+        <a href="/login">Login</a>
+        <a href="/register" class="register">Register</a>
+    </div>
+
+</header>
+
+<form method="POST">
+
+    <h2>Add New Station</h2>
+
+<label>Station Name</label>
+<input type="text" name="station_name" required>
+
+<label>City</label>
+<input type="text" name="city" required>
+
+<label>Address</label>
+<input type="text" name="address" required>
+
+<!-- GPS Location -->
+<label>Latitude</label>
+<input type="text"
+       name="latitude"
+       placeholder="Example: 12.9716"
+       required>
+
+<label>Longitude</label>
+<input type="text"
+       name="longitude"
+       placeholder="Example: 77.5946"
+       required>
+
+<label>Charger Type</label>
+<select name="charger_type" required>
+    <option value="">Select Charger Type</option>
+    <option value="AC">AC</option>
+    <option value="DC Fast">DC Fast</option>
+</select>
+
+<label>Available Slots</label>
+<input type="number"
+       name="available_slots"
+       min="0"
+       required>
+
+<label>Price</label>
+<input type="number"
+       name="price"
+       min="0"
+       required>
+
+<button type="submit">Add Station</button>
+</form>
+<footer class="footer">
+
+<div class="footer-content">
+
+<div class="footer-section">
+
+<h3>EV Charging Station Finder</h3>
+
+<p>
+Helping EV owners find nearby charging stations,
+book slots online and save time.
+</p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Quick Links</h3>
+
+<p><a href="/">Home</a></p>
+<p><a href="/login">User Login</a></p>
+<p><a href="/register">Register</a></p>
+<p><a href="/admin_login">Admin Login</a></p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Contact Us</h3>
+
+<p>📧 support@evfinder.com</p>
+
+<p>📞 +91 9876543210</p>
+
+<p>📍 Bengaluru, India</p>
+
+</div>
+
+</div>
+
+<hr>
+
+<p class="copyright">
+@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved.
+</p>
+
+</footer>
+</body>
+</html>

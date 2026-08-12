@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EV Charging Station Finder</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo">
+        ⚡ EV Charging station Finder
+    </div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        
+        <a href="/features">Features</a>
+        <a href="/contact">Contact</a>
+    </nav>
+
+    <div class="header-buttons">
+        <a href="/login">Login</a>
+        <a href="/register" class="register">Register</a>
+    </div>
+
+</header>
+
+
+
+
+
+<section class="contact-hero">
+
+    <div class="contact-badge">
+        📞 GET IN TOUCH
+    </div>
+
+    <h1>
+        We're Here to
+        <span>Help You</span>
+    </h1>
+
+    <p>
+        Have a question, suggestion or need help with
+        your charging station booking? Contact us.
+    </p>
+
+</section>
+
+
+
+<!-- ================= CONTACT SECTION ================= -->
+
+<section class="contact-section">
+
+
+    <!-- CONTACT INFORMATION -->
+
+    <div class="contact-info">
+
+        <div class="contact-title">
+
+            <span>CONTACT INFORMATION</span>
+
+            <h2>
+                Let's Talk About
+                <span>EV Charging</span>
+            </h2>
+
+            <p>
+                Our team is here to help you with questions
+                about charging stations, bookings and
+                using the EV Charge Finder platform.
+            </p>
+
+        </div>
+
+
+        <!-- EMAIL -->
+
+        <div class="contact-item">
+
+            <div class="contact-icon">
+                📧
+            </div>
+
+            <div>
+
+                <h3>
+                    Email
+                </h3>
+
+                <p>
+                    support@evfinder.com
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- PHONE -->
+
+        <div class="contact-item">
+
+            <div class="contact-icon">
+                📞
+            </div>
+
+            <div>
+
+                <h3>
+                    Phone
+                </h3>
+
+                <p>
+                    +91 9876543210
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- LOCATION -->
+
+        <div class="contact-item">
+
+            <div class="contact-icon">
+                📍
+            </div>
+
+            <div>
+
+                <h3>
+                    Location
+                </h3>
+
+                <p>
+                    Bengaluru, Karnataka, India
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- SUPPORT -->
+
+        <div class="contact-item">
+
+            <div class="contact-icon">
+                ⚡
+            </div>
+
+            <div>
+
+                <h3>
+                    EV Support
+                </h3>
+
+                <p>
+                    Charging & Booking Assistance
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- CONTACT FORM -->
+
+    <div class="contact-form-card">
+
+        <div class="form-heading">
+
+            <span>SEND US A MESSAGE</span>
+
+            <h2>
+                How Can We
+                <span>Help?</span>
+            </h2>
+
+        </div>
+
+
+        <!-- FLASH MESSAGE -->
+
+        {% with messages = get_flashed_messages() %}
+
+            {% if messages %}
+
+                {% for message in messages %}
+
+                    <div class="contact-message">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endif %}
+
+        {% endwith %}
+
+
+        <form method="POST">
+
+
+            <!-- NAME -->
+
+            <label>
+                Your Name
+            </label>
+
+            <input
+                type="text"
+                name="name"
+                placeholder="Enter your name"
+                required>
+
+
+            <!-- EMAIL -->
+
+            <label>
+                Email Address
+            </label>
+
+            <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                required>
+
+
+            <!-- SUBJECT -->
+
+            <label>
+                Subject
+            </label>
+
+            <input
+                type="text"
+                name="subject"
+                placeholder="What is this about?"
+                required>
+
+
+            <!-- MESSAGE -->
+
+            <label>
+                Message
+            </label>
+
+            <textarea
+                name="message"
+                rows="5"
+                placeholder="Write your message..."
+                required></textarea>
+
+
+            <!-- BUTTON -->
+
+            <button
+                type="submit"
+                class="contact-submit">
+
+                Send Message →
+
+            </button>
+
+        </form>
+
+    </div>
+
+</section>
+
+
+
+<!-- ================= FAQ ================= -->
+
+<section class="contact-faq">
+
+    <div class="section-title">
+
+        <span>QUICK HELP</span>
+
+        <h2>
+            Frequently Asked
+            <span>Questions</span>
+        </h2>
+
+    </div>
+
+
+    <div class="faq-grid">
+
+
+        <div class="faq-card">
+
+            <div>
+                ⚡
+            </div>
+
+            <h3>
+                How can I find a charging station?
+            </h3>
+
+            <p>
+                Go to Charging Stations and search by
+                city or use the GPS option to find nearby
+                stations.
+            </p>
+
+        </div>
+
+
+        <div class="faq-card">
+
+            <div>
+                📅
+            </div>
+
+            <h3>
+                How do I book a charging slot?
+            </h3>
+
+            <p>
+                Select a station, choose an available date
+                and time, and confirm your booking.
+            </p>
+
+        </div>
+
+
+        <div class="faq-card">
+
+            <div>
+                ❌
+            </div>
+
+            <h3>
+                Can I cancel my booking?
+            </h3>
+
+            <p>
+                Yes. You can manage your bookings from
+                your booking history.
+            </p>
+
+        </div>
+
+
+    </div>
+
+</section>
+
+
+<footer class="footer">
+
+<div class="footer-content">
+
+<div class="footer-section">
+
+<h3>EV Charging Station Finder</h3>
+
+<p>
+Helping EV owners find nearby charging stations,
+book slots online and save time.
+</p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Quick Links</h3>
+
+<p><a href="/">Home</a></p>
+<p><a href="/login">User Login</a></p>
+<p><a href="/register">Register</a></p>
+<p><a href="/admin_login">Admin Login</a></p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Contact Us</h3>
+
+<p>📧 support@evfinder.com</p>
+
+<p>📞 +91 9876543210</p>
+
+<p>📍 Bengaluru, India</p>
+
+</div>
+
+</div>
+
+<hr>
+
+<p class="copyright">
+@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved.
+</p>
+
+</footer>
+
+</body>
+</html>
+

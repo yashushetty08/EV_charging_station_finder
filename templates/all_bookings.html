@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EV Charging Station Finder</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo">
+        ⚡ EV Charging station Finder
+    </div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        
+        <a href="/features">Features</a>
+        <a href="/contact">Contact</a>
+    </nav>
+
+    <div class="header-buttons">
+        <a href="/login">Login</a>
+        <a href="/register" class="register">Register</a>
+    </div>
+
+</header>
+<body>
+
+<h2>All Bookings</h2>
+
+<form method="POST" style="width:350px; margin:20px auto;">
+    <input
+        type="text"
+        name="search"
+        placeholder="Search by Email or Station Name">
+
+    <button type="submit">Search</button>
+</form>
+
+<table border="1" cellpadding="10">
+
+<tr>
+<th>ID</th>
+<th>Email</th>
+<th>Station</th>
+<th>Date</th>
+<th>Time</th>
+<th>Status</th>
+</tr>
+
+{% for booking in bookings %}
+<tr>
+
+<td>{{ booking[0] }}</td>
+<td>{{ booking[1] }}</td>
+<td>{{ booking[2] }}</td>
+<td>{{ booking[3] }}</td>
+<td>{{ booking[4] }}</td>
+<td>{{ booking[5] }}</td>
+
+</tr>
+{% endfor %}
+
+</table>
+<footer class="footer">
+
+<div class="footer-content">
+
+<div class="footer-section">
+
+<h3>EV Charging Station Finder</h3>
+
+<p>
+Helping EV owners find nearby charging stations,
+book slots online and save time.
+</p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Quick Links</h3>
+
+<p><a href="/">Home</a></p>
+<p><a href="/login">User Login</a></p>
+<p><a href="/register">Register</a></p>
+<p><a href="/admin_login">Admin Login</a></p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Contact Us</h3>
+
+<p>📧 support@evfinder.com</p>
+
+<p>📞 +91 9876543210</p>
+
+<p>📍 Bengaluru, India</p>
+
+</div>
+
+</div>
+
+<hr>
+
+<p class="copyright">
+@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved.
+</p>
+
+</footer>
+</body>
+</html>

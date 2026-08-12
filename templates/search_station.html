@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EV Charging Station Finder</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo">
+        ⚡ EV Charging station Finder
+    </div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        
+        <a href="/features">Features</a>
+        <a href="/contact">Contact</a>
+    </nav>
+
+    <div class="header-buttons">
+        <a href="/login">Login</a>
+        <a href="/register" class="register">Register</a>
+    </div>
+
+</header>
+
+
+<body>
+
+
+
+
+{% with messages = get_flashed_messages() %}
+
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <script>
+
+                alert("{{ message }}");
+
+            </script>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+
+<!-- ============================= -->
+<!-- SEARCH BOX -->
+<!-- ============================= -->
+
+<div class="search-box">
+
+    <h2>
+        🔌 Find Charging Stations
+    </h2>
+
+
+    <!-- City Search -->
+
+    <form method="POST">
+
+        <input
+            type="text"
+            name="city"
+            placeholder="Enter City"
+            required
+        >
+
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
+
+    </form>
+
+
+    <br>
+
+
+    <!-- GPS Search -->
+
+    <h3>
+        Or Find Charging Stations Near You
+    </h3>
+
+
+    <button
+        type="button"
+        class="gps-button"
+        onclick="findNearbyStations()"
+    >
+        📍 Find Nearby Stations
+    </button>
+
+</div>
+
+
+
+<!-- ============================= -->
+<!-- STATIONS -->
+<!-- ============================= -->
+
+{% if stations %}
+
+<div class="stations-container">
+
+
+    {% for station in stations %}
+
+
+    <div class="station-card">
+
+
+        <h3>
+            {{ station[1] }}
+        </h3>
+
+
+        <p>
+            📍 <strong>City:</strong>
+            {{ station[2] }}
+        </p>
+
+
+        <p>
+            🏠 <strong>Address:</strong>
+            {{ station[3] }}
+        </p>
+
+
+        <p>
+            🔌 <strong>Charger Type:</strong>
+            {{ station[4] }}
+        </p>
+
+
+        <p>
+            🅿️ <strong>Available Slots:</strong>
+            {{ station[5] }}
+        </p>
+
+
+        <p>
+            💰 <strong>Price:</strong>
+            ₹{{ station[6] }}
+        </p>
+
+
+
+        {% if station[5] > 0 %}
+
+
+            <a
+                href="{{ url_for('book',
+                         station_id=station[0]) }}"
+                class="book-button"
+            >
+                Book Now
+            </a>
+
+
+        {% else %}
+
+
+            <button
+                class="full-button"
+                disabled
+            >
+                Slots Full
+            </button>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+    {% endfor %}
+
+
+</div>
+
+
+{% else %}
+
+
+<!-- ============================= -->
+<!-- NO STATIONS -->
+<!-- ============================= -->
+
+<div class="no-station">
+
+    <h3>
+        No charging stations found.
+    </h3>
+
+    <p>
+        Try another city or use
+        <strong>Find Nearby Stations</strong>.
+    </p>
+
+</div>
+
+
+{% endif %}
+
+
+
+
+
+<script>
+
+function findNearbyStations() {
+
+
+    
+
+    if (!navigator.geolocation) {
+
+        alert(
+            "GPS is not supported by your browser."
+        );
+
+        return;
+    }
+
+
+    
+
+    navigator.geolocation.getCurrentPosition(
+
+        function(position) {
+
+
+            const latitude =
+                position.coords.latitude;
+
+
+            const longitude =
+                position.coords.longitude;
+
+
+            /*
+               Send location to Flask
+            */
+
+            window.location.href =
+                "/nearby_stations?latitude=" +
+                latitude +
+                "&longitude=" +
+                longitude;
+
+
+        },
+
+
+        function(error) {
+
+
+            if (error.code === 1) {
+
+                alert(
+                    "Please allow location access to find nearby stations."
+                );
+
+            }
+
+            else if (error.code === 2) {
+
+                alert(
+                    "Your location could not be determined."
+                );
+
+            }
+
+            else if (error.code === 3) {
+
+                alert(
+                    "Location request timed out."
+                );
+
+            }
+
+            else {
+
+                alert(
+                    "Unable to get your location."
+                );
+
+            }
+
+        }
+
+    );
+
+
+<div style="text-align:center;">
+
+        <a
+            href="{{ url_for('dashboard') }}"
+            class="back-button"
+        >
+            ← Back 
+        </a>
+
+    </div>
+
+
+}
+
+</script>
+
+<footer class="footer">
+
+<div class="footer-content">
+
+<div class="footer-section">
+
+<h3>EV Charging Station Finder</h3>
+
+<p>
+Helping EV owners find nearby charging stations,
+book slots online and save time.
+</p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Quick Links</h3>
+
+<p><a href="/">Home</a></p>
+<p><a href="/login">User Login</a></p>
+<p><a href="/register">Register</a></p>
+<p><a href="/admin_login">Admin Login</a></p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Contact Us</h3>
+
+<p>📧 support@evfinder.com</p>
+
+<p>📞 +91 9876543210</p>
+
+<p>📍 Bengaluru, India</p>
+
+</div>
+
+</div>
+
+<hr>
+
+<p class="copyright">
+@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved.
+</p>
+
+</footer>
+</body>
+
+</html>

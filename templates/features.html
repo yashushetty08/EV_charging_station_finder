@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EV Charging Station Finder</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo">
+        ⚡ EV Charging station Finder
+    </div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        
+        <a href="/features">Features</a>
+        <a href="/contact">Contact</a>
+    </nav>
+
+    <div class="header-buttons">
+        <a href="/login">Login</a>
+        <a href="/register" class="register">Register</a>
+    </div>
+
+</header>
+
+
+
+
+<section class="features-hero">
+
+    <div class="features-badge">
+        ⚡ POWERFUL FEATURES
+    </div>
+
+    <h1>
+        Everything You Need
+        <span>for EV Charging</span>
+    </h1>
+
+    <p>
+        A simple and intelligent platform designed to
+        make finding, booking and managing EV charging
+        stations easier.
+    </p>
+
+</section>
+
+
+
+<!-- ================= MAIN FEATURES ================= -->
+
+<section class="features-section">
+
+    <div class="section-title">
+
+        <span>EXPLORE OUR FEATURES</span>
+
+        <h2>
+            Designed for a
+            <span>Better Charging Experience</span>
+        </h2>
+
+    </div>
+
+
+    <div class="features-grid">
+
+
+        <!-- FEATURE 1 -->
+
+        <div class="feature-box">
+
+            <div class="feature-number">
+                01
+            </div>
+
+            <div class="large-feature-icon">
+                👤
+            </div>
+
+            <h2>
+                User Registration & Login
+            </h2>
+
+            <p>
+                Create a secure account and manage your
+                personal information, vehicle details and
+                charging activities.
+            </p>
+
+            <ul>
+
+                <li>✓ Secure registration</li>
+
+                <li>✓ Login and logout</li>
+
+                <li>✓ Profile management</li>
+
+            </ul>
+
+        </div>
+
+
+
+        <!-- FEATURE 2 -->
+
+        <div class="feature-box">
+
+            <div class="feature-number">
+                02
+            </div>
+
+            <div class="large-feature-icon">
+                📍
+            </div>
+
+            <h2>
+                Station Search
+            </h2>
+
+            <p>
+                Search for EV charging stations by city
+                and discover stations close to your
+                current location.
+            </p>
+
+            <ul>
+
+                <li>✓ City-based search</li>
+
+                <li>✓ GPS location support</li>
+
+                <li>✓ Nearby stations</li>
+
+            </ul>
+
+        </div>
+
+
+
+        <!-- FEATURE 3 -->
+
+        <div class="feature-box">
+
+            <div class="feature-number">
+                03
+            </div>
+
+            <div class="large-feature-icon">
+                📅
+            </div>
+
+            <h2>
+                Charging Slot Booking
+            </h2>
+
+            <p>
+                Select your preferred charging station,
+                date and time and reserve an available
+                charging slot.
+            </p>
+
+            <ul>
+
+                <li>✓ Date and time selection</li>
+
+                <li>✓ Slot availability</li>
+
+                <li>✓ Online reservation</li>
+
+            </ul>
+
+        </div>
+
+
+
+        <!-- FEATURE 4 -->
+
+        <div class="feature-box">
+
+            <div class="feature-number">
+                04
+            </div>
+
+            <div class="large-feature-icon">
+                ⚡
+            </div>
+
+            <h2>
+                Multiple Charger Types
+            </h2>
+
+            <p>
+                View different charger types available
+                at charging stations.
+            </p>
+
+            <ul>
+
+                <li>✓ AC Charger</li>
+
+                <li>✓ DC Fast Charger</li>
+
+                <li>✓ Charger information</li>
+
+            </ul>
+
+        </div>
+
+
+
+        <!-- FEATURE 5 -->
+
+        <div class="feature-box">
+
+            <div class="feature-number">
+                05
+            </div>
+
+            <div class="large-feature-icon">
+                📋
+            </div>
+
+            <h2>
+                Booking Management
+            </h2>
+
+            <p>
+                View your upcoming and previous bookings
+                and manage your reservations easily.
+            </p>
+
+            <ul>
+
+                <li>✓ Booking history</li>
+
+                <li>✓ Booking details</li>
+
+                <li>✓ Cancel booking</li>
+
+            </ul>
+
+        </div>
+
+
+
+        <!-- FEATURE 6 -->
+
+        <div class="feature-box">
+
+            <div class="feature-number">
+                06
+            </div>
+
+            <div class="large-feature-icon">
+                🏢
+            </div>
+
+            <h2>
+                Station Owner Dashboard
+            </h2>
+
+            <p>
+                Station owners can manage their charging
+                stations and monitor available slots.
+            </p>
+
+            <ul>
+
+                <li>✓ Add stations</li>
+
+                <li>✓ Manage stations</li>
+
+                <li>✓ Manage bookings</li>
+
+            </ul>
+
+        </div>
+
+
+
+        <!-- FEATURE 7 -->
+
+        <div class="feature-box">
+
+            <div class="feature-number">
+                07
+            </div>
+
+            <div class="large-feature-icon">
+                🛡️
+            </div>
+
+            <h2>
+                Admin Dashboard
+            </h2>
+
+            <p>
+                Administrators can manage users, stations,
+                bookings and important system information.
+            </p>
+
+            <ul>
+
+                <li>✓ User management</li>
+
+                <li>✓ Station management</li>
+
+                <li>✓ Booking monitoring</li>
+
+            </ul>
+
+        </div>
+
+
+
+        <!-- FEATURE 8 -->
+
+        <div class="feature-box">
+
+            <div class="feature-number">
+                08
+            </div>
+
+            <div class="large-feature-icon">
+                📊
+            </div>
+
+            <h2>
+                Reports & Analytics
+            </h2>
+
+            <p>
+                View useful information about users,
+                charging stations and booking activities.
+            </p>
+
+            <ul>
+
+                <li>✓ Booking reports</li>
+
+                <li>✓ Station information</li>
+
+                <li>✓ System statistics</li>
+
+            </ul>
+
+        </div>
+
+
+    </div>
+
+</section>
+
+
+
+<!-- ================= SPECIAL FEATURES ================= -->
+
+<section class="special-features">
+
+    <div class="section-title">
+
+        <span>SMART EXPERIENCE</span>
+
+        <h2>
+            Why Choose
+            <span>EV Charge Finder?</span>
+        </h2>
+
+    </div>
+
+
+    <div class="special-grid">
+
+
+        <div class="special-card">
+
+            <div>📍</div>
+
+            <h3>
+                GPS Based Search
+            </h3>
+
+            <p>
+                Find charging stations near your
+                current location.
+            </p>
+
+        </div>
+
+
+        <div class="special-card">
+
+            <div>⏱️</div>
+
+            <h3>
+                Save Time
+            </h3>
+
+            <p>
+                Book your charging slot before
+                reaching the station.
+            </p>
+
+        </div>
+
+
+        <div class="special-card">
+
+            <div>🔔</div>
+
+            <h3>
+                Availability
+            </h3>
+
+            <p>
+                Know whether charging slots are
+                available before booking.
+            </p>
+
+        </div>
+
+
+        <div class="special-card">
+
+            <div>🔒</div>
+
+            <h3>
+                Secure System
+            </h3>
+
+            <p>
+                User accounts and booking information
+                are managed securely.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- ================= CTA ================= -->
+
+<section class="features-cta">
+
+    <h2>
+        Ready to Start Charging?
+    </h2>
+
+    <p>
+        Find a nearby charging station and book
+        your slot today.
+    </p>
+
+    <a href="/search_stations">
+        Find Charging Stations →
+    </a>
+
+</section>
+
+
+
+<!-- ================= FOOTER ================= -->
+
+<footer class="footer">
+
+    <div class="footer-content">
+
+
+        <div class="footer-section">
+
+            <div class="footer-logo">
+                ⚡ EV Charge Finder
+            </div>
+
+            <p>
+                Helping EV owners find nearby charging
+                stations, book slots online and save time.
+            </p>
+
+        </div>
+
+
+        <div class="footer-section">
+
+            <h3>Quick Links</h3>
+
+            <a href="/">Home</a>
+
+            <a href="/about">About</a>
+
+            <a href="/search_stations">
+                Charging Stations
+            </a>
+
+            <a href="/features">
+                Features
+            </a>
+
+            <a href="/contact">
+                Contact
+            </a>
+
+        </div>
+
+
+        <div class="footer-section">
+
+            <h3>Account</h3>
+
+            <a href="/login">
+                User Login
+            </a>
+
+            <a href="/register">
+                Register
+            </a>
+
+            <a href="/owner_login">
+                Owner Login
+            </a>
+
+            <a href="/admin_login">
+                Admin Login
+            </a>
+
+        </div>
+
+
+        <div class="footer-section">
+
+            <h3>Contact Us</h3>
+
+            <p>
+                📧 support@evfinder.com
+            </p>
+
+            <p>
+                📞 +91 9876543210
+            </p>
+
+            <p>
+                📍 Bengaluru, India
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <hr>
+
+    <div class="copyright">
+
+        © 2026 EV Charge Finder
+        <span>•</span>
+        All Rights Reserved.
+
+    </div>
+
+</footer>
+
+
+</body>
+</html>

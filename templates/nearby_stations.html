@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Nearby Charging Stations</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+
+        .nearby-page {
+            width: 90%;
+            max-width: 1100px;
+            margin: 40px auto;
+        }
+
+        .nearby-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .station-list {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .station-card {
+            background: rgba(255, 255, 255, 0.90);
+            padding: 25px;
+            border-radius: 15px;
+
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.20);
+
+            transition: 0.3s;
+        }
+
+        .station-card:hover {
+            transform: translateY(-5px);
+
+            box-shadow:
+                0 8px 20px rgba(0, 0, 0, 0.30);
+        }
+
+        .station-card h3 {
+            margin-bottom: 15px;
+            color: #0d6efd;
+        }
+
+        .station-card p {
+            margin: 10px 0;
+            color: #333;
+        }
+
+        .distance {
+            font-weight: bold;
+            color: #198754 !important;
+        }
+
+        .slots {
+            font-weight: bold;
+        }
+
+        .book-button {
+            display: inline-block;
+            margin-top: 15px;
+
+            padding: 10px 20px;
+
+            background: #0d6efd;
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 6px;
+        }
+
+        .book-button:hover {
+            background: #084298;
+        }
+
+        .full-button {
+            margin-top: 15px;
+
+            padding: 10px 20px;
+
+            background: #dc3545;
+            color: white;
+
+            border: none;
+            border-radius: 6px;
+
+            cursor: not-allowed;
+        }
+
+        .back-button {
+            display: inline-block;
+
+            margin-top: 30px;
+
+            padding: 10px 20px;
+
+            background: #6c757d;
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 6px;
+        }
+
+        .back-button:hover {
+            background: #545b62;
+        }
+
+        .no-stations {
+            background: rgba(255, 255, 255, 0.90);
+
+            padding: 30px;
+
+            text-align: center;
+
+            border-radius: 15px;
+
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.20);
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- Flash Messages -->
+
+{% with messages = get_flashed_messages() %}
+
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <script>
+                alert("{{ message }}");
+            </script>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+
+<div class="nearby-page">
+
+
+    <div class="nearby-title">
+
+        <h2>📍 Nearby Charging Stations</h2>
+
+        <p>
+            Charging stations within 10 km
+        </p>
+
+    </div>
+
+
+
+    {% if nearby %}
+
+
+        <div class="station-list">
+
+
+            {% for item in nearby %}
+
+                {% set station = item['station'] %}
+
+                {% set distance = item['distance'] %}
+
+
+                <div class="station-card">
+
+
+                    <h3>
+                        {{ station[1] }}
+                    </h3>
+
+
+                    <p>
+                        📍 <strong>City:</strong>
+                        {{ station[2] }}
+                    </p>
+
+
+                    <p>
+                        🏠 <strong>Address:</strong>
+                        {{ station[3] }}
+                    </p>
+
+
+                    <p>
+                        🔌 <strong>Charger Type:</strong>
+                        {{ station[4] }}
+                    </p>
+
+
+                    <p class="distance">
+                        📏 Distance:
+                        {{ "%.2f"|format(distance) }} km
+                    </p>
+
+
+                    <p class="slots">
+
+                        🅿️ Available Slots:
+
+                        {{ station[5] }}
+
+                    </p>
+
+
+                    <p>
+                        💰 <strong>Price:</strong>
+                        ₹{{ station[6] }}
+                    </p>
+
+
+
+                    {% if station[5] > 0 %}
+
+
+                        <a
+                            href="{{ url_for(
+                                'book',
+                                station_id=station[0]
+                            ) }}"
+                            class="book-button"
+                        >
+                            Book Now
+                        </a>
+
+
+                    {% else %}
+
+
+                        <button
+                            class="full-button"
+                            disabled
+                        >
+                            Slots Full
+                        </button>
+
+
+                    {% endif %}
+
+
+                </div>
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+    {% else %}
+
+
+        <div class="no-stations">
+
+            <h3>
+                😔 No Charging Stations Found
+            </h3>
+
+            <p>
+                There are no charging stations
+                within 10 km of your current location.
+            </p>
+
+        </div>
+
+
+    {% endif %}
+
+
+
+    <div style="text-align:center;">
+
+        <a
+            href="{{ url_for('search_station') }}"
+            class="back-button"
+        >
+            ← Back to Search
+        </a>
+
+    </div>
+
+
+</div>
+
+<footer class="footer">
+
+<div class="footer-content">
+
+<div class="footer-section">
+
+<h3>EV Charging Station Finder</h3>
+
+<p>
+Helping EV owners find nearby charging stations,
+book slots online and save time.
+</p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Quick Links</h3>
+
+<p><a href="/">Home</a></p>
+<p><a href="/login">User Login</a></p>
+<p><a href="/register">Register</a></p>
+<p><a href="/admin_login">Admin Login</a></p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Contact Us</h3>
+
+<p>📧 support@evfinder.com</p>
+
+<p>📞 +91 9876543210</p>
+
+<p>📍 Bengaluru, India</p>
+
+</div>
+
+</div>
+
+<hr>
+
+<p class="copyright">
+@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved.
+</p>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EV Charging Station Finder</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo">
+        ⚡ EV Charging station Finder
+    </div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        
+        <a href="/features">Features</a>
+        <a href="/contact">Contact</a>
+    </nav>
+
+    <div class="header-buttons">
+        <a href="/login">Login</a>
+        <a href="/register" class="register">Register</a>
+    </div>
+
+</header>
+<body>
+
+<div class="navbar">
+    <h2>EV Charging Station Finder</h2>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/search_station">Search Station</a>
+    <a href="/booking_history">My Bookings</a>
+    <a href="{{ url_for('profile') }}">
+    <button>Profile</button>
+</a>
+    <a href="/logout">Logout</a>
+</div>
+
+<div class="container">
+
+    <h1>Welcome {{ fullname }}</h1>
+
+    
+
+    <div class="card">
+        <h3>Search Charging Stations</h3>
+        <a href="/search_station">
+            <button>Search Now</button>
+        </a>
+    </div>
+
+    <div class="card">
+        <h3>My Bookings</h3>
+        <a href="/booking_history">
+            <button>View Bookings</button>
+        </a>
+    </div>
+
+    <div class="card">
+        <h3>My Profile</h3>
+        <a href="{{ url_for('profile') }}">
+            <button>View Profile</button>
+        </a>
+    </div>
+
+    <div class="card">
+    <h3>Change Password</h3>
+
+    <a href="{{ url_for('change_password') }}">
+        <button>Change Password</button>
+    </a>
+</div>
+
+</div>
+<footer class="footer">
+
+<div class="footer-content">
+
+<div class="footer-section">
+
+<h3>EV Charging Station Finder</h3>
+
+<p>
+Helping EV owners find nearby charging stations,
+book slots online and save time.
+</p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Quick Links</h3>
+
+<p><a href="/">Home</a></p>
+<p><a href="/login">User Login</a></p>
+<p><a href="/register">Register</a></p>
+<p><a href="/admin_login">Admin Login</a></p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Contact Us</h3>
+
+<p>📧 support@evfinder.com</p>
+
+<p>📞 +91 9876543210</p>
+
+<p>📍 Bengaluru, India</p>
+
+</div>
+
+</div>
+
+<hr>
+
+<p class="copyright">
+@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved.
+</p>
+
+</footer>
+</body>
+</html>
