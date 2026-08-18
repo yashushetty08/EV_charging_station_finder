@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contact Messages</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo">
+        ⚡ EV Charging station Finder
+    </div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/features">Features</a>
+        <a href="/contact">Contact</a>
+    </nav>
+
+    <div class="header-buttons">
+        <a href="/login">Login</a>
+        <a href="/register" class="register">Register</a>
+    </div>
+
+</header>
+
+
+<body class="contact-messages-page">
+
+    <div class="contact-messages-container">
+
+        <h1>Contact Messages</h1>
+
+        {% if messages %}
+
+            {% for msg in messages %}
+
+            <div class="message">
+
+                <p class="subject">
+                    {{ msg[2] }}
+                </p>
+
+                <p>
+                    <span class="label">Name:</span>
+                    {{ msg[1] }}
+                </p>
+
+                <p>
+                    <span class="label">Message:</span>
+                </p>
+
+                <div class="message-text">
+                    {{ msg[3] }}
+                </div>
+
+                <p class="date">
+                    <span class="label">Date & Time:</span>
+                    {{ msg[4].strftime('%d-%m-%Y %I:%M %p') }}
+                </p>
+
+            </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="no-messages">
+                No contact messages yet.
+            </div>
+
+        {% endif %}
+
+        <a href="/admin_dashboard" class="back-button">
+            ← Back to Admin Dashboard
+        </a>
+
+    </div>
+
+    <footer class="footer">
+
+<div class="footer-content">
+
+<div class="footer-section">
+
+<h3>EV Charging Station Finder</h3>
+
+<p>
+Helping EV owners find nearby charging stations,
+book slots online and save time.
+</p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Quick Links</h3>
+
+<p><a href="/">Home</a></p>
+<p><a href="/login">User Login</a></p>
+<p><a href="/register">Register</a></p>
+<p><a href="/admin_login">Admin Login</a></p>
+
+</div>
+
+<div class="footer-section">
+
+<h3>Contact Us</h3>
+
+<p>📧 support@evfinder.com</p>
+
+<p>📞 +91 9876543210</p>
+
+<p>📍 Bengaluru, India</p>
+
+</div>
+
+</div>
+
+<hr>
+
+<p class="copyright">
+@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved  by Yashashwini R.
+</p>
+
+</footer>
+
+</body>
+</html>

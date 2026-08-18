@@ -328,18 +328,14 @@ def search_station():
 
         city = request.form['city']
 
-
         cursor.execute(
             """
             SELECT *
             FROM stations
             WHERE city LIKE %s
             """,
-            (
-                '%' + city + '%',
-            )
+            ('%' + city + '%',)
         )
-
 
     else:
 
@@ -350,15 +346,12 @@ def search_station():
             """
         )
 
-
     stations = cursor.fetchall()
-
 
     return render_template(
         'search_station.html',
         stations=stations
     )
-
 
 
 # BOOK CHARGING SLOT
@@ -654,15 +647,10 @@ def book(station_id):
 
         except Exception as e:
 
-            print(
-                "Confirmation email failed:",
-                e
-            )
+            print("Confirmation email failed:",e)
 
 
-        flash(
-            "Booking Successful!"
-        )
+        flash("Booking Successful!")
 
 
         return redirect(
@@ -737,6 +725,7 @@ def cancel_booking(booking_id):
 
 
     # Check booking belongs to logged-in user
+
     cursor.execute(
         """
         SELECT station_id, status
@@ -782,6 +771,7 @@ def cancel_booking(booking_id):
 
 
     # Cancel booking
+
     cursor.execute(
         """
         UPDATE bookings
@@ -797,6 +787,7 @@ def cancel_booking(booking_id):
 
 
     # Return slot
+
     cursor.execute(
         """
         UPDATE stations
@@ -1609,9 +1600,7 @@ def edit_profile():
         return redirect(url_for('profile'))
 
 
-    # IMPORTANT:
-    # Select columns in exactly the same order
-    # used by edit_profile.html
+    
 
     cursor.execute("""
         SELECT fullname,
@@ -2025,153 +2014,76 @@ def view_reviews():
 @app.route('/nearby_stations')
 def nearby_stations():
 
-    latitude = request.args.get(
-        'latitude'
-    )
-
-    longitude = request.args.get(
-        'longitude'
-    )
-
+    latitude = request.args.get('latitude')
+    longitude = request.args.get('longitude')
 
     if not latitude or not longitude:
+        flash("Location not available.")
+        return redirect(url_for('dashboard'))
 
-        flash(
-            "Unable to get your location."
-        )
+    latitude = float(latitude)
+    longitude = float(longitude)
 
-        return redirect(
-            url_for('search_station')
-        )
-
-
-    try:
-
-        user_lat = float(latitude)
-
-        user_lon = float(longitude)
-
-    except ValueError:
-
-        flash(
-            "Invalid location."
-        )
-
-        return redirect(
-            url_for('search_station')
-        )
-
-
-    
-    # GET STATIONS WITH GPS
-   
-
-    cursor.execute(
-        """
-        SELECT
-            station_id,
-            station_name,
-            city,
-            address,
-            charger_type,
-            available_slots,
-            price,
-            latitude,
-            longitude
+    cursor.execute("""
+        SELECT station_name,
+               city,
+               address,
+               charger_type,
+               available_slots,
+               price,
+               latitude,
+               longitude
         FROM stations
-        WHERE latitude IS NOT NULL
-        AND longitude IS NOT NULL
-        """
-    )
-
+    """)
 
     stations = cursor.fetchall()
 
+    nearby_stations = []
 
-    nearby = []
-
-
-    # Earth radius in kilometres
-
-    R = 6371
-
-
-    
-    # CALCULATE DISTANCE
-
+    from math import radians, sin, cos, sqrt, atan2
 
     for station in stations:
 
-        try:
-
-            station_lat = float(
-                station[7]
-            )
-
-            station_lon = float(
-                station[8]
-            )
-
-        except (TypeError, ValueError):
-
+        if station[6] is None or station[7] is None:
             continue
 
+        station_lat = float(station[6])
+        station_lon = float(station[7])
 
-        dlat = radians(
-            station_lat - user_lat
-        )
+        R = 6371
 
-        dlon = radians(
-            station_lon - user_lon
-        )
-
+        dlat = radians(station_lat - latitude)
+        dlon = radians(station_lon - longitude)
 
         a = (
             sin(dlat / 2) ** 2
-            +
-            cos(radians(user_lat))
-            *
-            cos(radians(station_lat))
-            *
-            sin(dlon / 2) ** 2
+            + cos(radians(latitude))
+            * cos(radians(station_lat))
+            * sin(dlon / 2) ** 2
         )
 
-
-        c = 2 * atan2(
-            sqrt(a),
-            sqrt(1 - a)
-        )
-
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
         distance = R * c
 
-
-        # 10 KM radius
-
         if distance <= 10:
 
-            nearby.append(
-                {
-                    'station': station,
-                    'distance': distance
-                }
-            )
+            nearby_stations.append({
+                'station_name': station[0],
+                'city': station[1],
+                'address': station[2],
+                'charger_type': station[3],
+                'available_slots': station[4],
+                'price': station[5],
+                'distance': round(distance, 2)
+            })
 
-
-    
-    # NEAREST FIRST
-    
-
-    nearby.sort(
-        key=lambda x: x['distance']
-    )
-
+    nearby_stations.sort(key=lambda x: x['distance'])
 
     return render_template(
         'nearby_stations.html',
-        nearby=nearby
+        stations=nearby_stations
     )
-
 
 @app.route('/about')
 def about():
@@ -2242,14 +2154,37 @@ def contact():
         subject = request.form.get('subject')
         message = request.form.get('message')
 
-        
+        cursor.execute("""
+            INSERT INTO contact_messages
+            (name, subject, message)
+            VALUES (%s, %s, %s)
+        """, (name, subject, message))
+
+        db.commit()
 
         flash("Thank you! Your message has been sent successfully.")
 
         return redirect(url_for('contact'))
 
     return render_template('contact.html')
-  
+
+
+
+@app.route('/contact_messages')
+def contact_messages():
+
+    cursor.execute("""
+        SELECT message_id, name, subject, message, created_at
+        FROM contact_messages
+        ORDER BY created_at DESC
+    """)
+
+    messages = cursor.fetchall()
+
+    return render_template(
+        'contact_messages.html',
+        messages=messages
+    )
 
 if __name__ == '__main__':
 

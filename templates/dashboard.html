@@ -77,6 +77,10 @@
 </div>
 
 </div>
+
+<a href="/login" class="back-button">
+    ← Back 
+</a>
 <footer class="footer">
 
 <div class="footer-content">
@@ -120,9 +124,42 @@ book slots online and save time.
 <hr>
 
 <p class="copyright">
-@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved.
+@ 2026 EV Charging Station Finder & Booking System | All Rights Reservedby Yashashwini R. 
 </p>
 
 </footer>
+
+<script>
+function findNearbyStations() {
+
+    alert("Finding your location...");
+
+    if (!navigator.geolocation) {
+        alert("Your browser does not support location.");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            alert("Location found!");
+
+            window.location.href =
+                "/nearby_stations?latitude=" +
+                latitude +
+                "&longitude=" +
+                longitude;
+        },
+
+        function(error) {
+
+            alert("Please allow location access to find nearby stations.");
+        }
+    );
+}
+</script>
 </body>
 </html>
