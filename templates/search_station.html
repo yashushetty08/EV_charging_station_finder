@@ -3,7 +3,8 @@
 <head>
     <title>EV Charging Station Finder</title>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
@@ -11,29 +12,28 @@
 <header class="header">
 
     <div class="logo">
-        ⚡ EV Charging station Finder
+        ⚡ EV Charging Station Finder
     </div>
 
     <nav>
         <a href="/">Home</a>
         <a href="/about">About</a>
-        
         <a href="/features">Features</a>
         <a href="/contact">Contact</a>
     </nav>
 
     <div class="header-buttons">
         <a href="/login">Login</a>
-        <a href="/register" class="register">Register</a>
+
+        <a href="/register" class="register">
+            Register
+        </a>
     </div>
 
 </header>
 
 
-<body>
-
-
-
+<!-- FLASH MESSAGE -->
 
 {% with messages = get_flashed_messages() %}
 
@@ -42,9 +42,7 @@
         {% for message in messages %}
 
             <script>
-
                 alert("{{ message }}");
-
             </script>
 
         {% endfor %}
@@ -54,16 +52,13 @@
 {% endwith %}
 
 
-
+<!-- SEARCH SECTION -->
 
 <div class="search-box">
 
     <h2>
         🔌 Find Charging Stations
     </h2>
-
-
-   
 
     <form method="POST">
 
@@ -83,16 +78,11 @@
 
     </form>
 
-
     <br>
-
-
-    <!-- GPS Search -->
 
     <h3>
         Or Find Charging Stations Near You
     </h3>
-
 
     <button
         type="button"
@@ -105,24 +95,24 @@
 </div>
 
 
-
-
+<!-- STATION LIST -->
 
 {% if stations %}
 
 <div class="stations-container">
 
-
     {% for station in stations %}
-
 
     <div class="station-card">
 
+        <!-- STATION NAME -->
 
         <h3>
             {{ station[1] }}
         </h3>
 
+
+        <!-- CITY -->
 
         <p>
             📍 <strong>City:</strong>
@@ -130,11 +120,15 @@
         </p>
 
 
+        <!-- ADDRESS -->
+
         <p>
             🏠 <strong>Address:</strong>
             {{ station[3] }}
         </p>
 
+
+        <!-- CHARGER TYPE -->
 
         <p>
             🔌 <strong>Charger Type:</strong>
@@ -142,11 +136,15 @@
         </p>
 
 
+        <!-- CHARGING CAPACITY -->
+
         <p>
-            🅿️ <strong>Available Slots:</strong>
-            {{ station[5] }}
+            🅿️ <strong>Charging Capacity:</strong>
+            {{ station[5] }} slots
         </p>
 
+
+        <!-- PRICE -->
 
         <p>
             💰 <strong>Price:</strong>
@@ -154,46 +152,25 @@
         </p>
 
 
+        <!-- BOOK BUTTON -->
 
-        {% if station[5] > 0 %}
-
-
-            <a
-                href="{{ url_for('book',
-                         station_id=station[0]) }}"
-                class="book-button"
-            >
-                Book Now
-            </a>
-
-
-        {% else %}
-
-
-            <button
-                class="full-button"
-                disabled
-            >
-                Slots Full
-            </button>
-
-
-        {% endif %}
-
+        <a
+            href="{{ url_for('book', station_id=station[0]) }}"
+            class="book-button"
+        >
+            Book Now
+        </a>
 
     </div>
 
-
     {% endfor %}
-
 
 </div>
 
 
 {% else %}
 
-
-
+<!-- NO STATION -->
 
 <div class="no-station">
 
@@ -208,19 +185,28 @@
 
 </div>
 
-
 {% endif %}
 
 
+<!-- BACK BUTTON -->
+
+<div style="text-align:center; margin:30px;">
+
+    <a
+        href="{{ url_for('dashboard') }}"
+        class="back-button"
+    >
+        ← Back
+    </a>
+
+</div>
 
 
+<!-- GPS JAVASCRIPT -->
 
 <script>
 
 function findNearbyStations() {
-
-
-    
 
     if (!navigator.geolocation) {
 
@@ -232,24 +218,16 @@ function findNearbyStations() {
     }
 
 
-    
-
     navigator.geolocation.getCurrentPosition(
 
         function(position) {
 
-
             const latitude =
                 position.coords.latitude;
-
 
             const longitude =
                 position.coords.longitude;
 
-
-            /*
-               Send location to Flask
-            */
 
             window.location.href =
                 "/nearby_stations?latitude=" +
@@ -257,12 +235,10 @@ function findNearbyStations() {
                 "&longitude=" +
                 longitude;
 
-
         },
 
 
         function(error) {
-
 
             if (error.code === 1) {
 
@@ -300,70 +276,106 @@ function findNearbyStations() {
 
     );
 
-
-<div style="text-align:center;">
-
-        <a
-            href="{{ url_for('dashboard') }}"
-            class="back-button"
-        >
-            ← Back 
-        </a>
-
-    </div>
-
-
 }
 
 </script>
 
+
+<!-- FOOTER -->
+
 <footer class="footer">
 
-<div class="footer-content">
+    <div class="footer-content">
 
-<div class="footer-section">
 
-<h3>EV Charging Station Finder</h3>
+        <!-- ABOUT -->
 
-<p>
-Helping EV owners find nearby charging stations,
-book slots online and save time.
-</p>
+        <div class="footer-section">
 
-</div>
+            <h3>
+                EV Charging Station Finder
+            </h3>
 
-<div class="footer-section">
+            <p>
+                Helping EV owners find nearby charging stations,
+                book slots online and save time.
+            </p>
 
-<h3>Quick Links</h3>
+        </div>
 
-<p><a href="/">Home</a></p>
-<p><a href="/login">User Login</a></p>
-<p><a href="/register">Register</a></p>
-<p><a href="/admin_login">Admin Login</a></p>
 
-</div>
+        <!-- QUICK LINKS -->
 
-<div class="footer-section">
+        <div class="footer-section">
 
-<h3>Contact Us</h3>
+            <h3>
+                Quick Links
+            </h3>
 
-<p>📧 support@evfinder.com</p>
+            <p>
+                <a href="/">
+                    Home
+                </a>
+            </p>
 
-<p>📞 +91 9876543210</p>
+            <p>
+                <a href="/login">
+                    User Login
+                </a>
+            </p>
 
-<p>📍 Bengaluru, India</p>
+            <p>
+                <a href="/register">
+                    Register
+                </a>
+            </p>
 
-</div>
+            <p>
+                <a href="/admin_login">
+                    Admin Login
+                </a>
+            </p>
 
-</div>
+        </div>
 
-<hr>
 
-<p class="copyright">
-@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved by Yashashwini R.
-</p>
+        <!-- CONTACT -->
+
+        <div class="footer-section">
+
+            <h3>
+                Contact Us
+            </h3>
+
+            <p>
+                📧 support@evfinder.com
+            </p>
+
+            <p>
+                📞 +91 9876543210
+            </p>
+
+            <p>
+                📍 Bengaluru, India
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <hr>
+
+
+    <p class="copyright">
+
+        @ 2026 EV Charging Station Finder & Booking System |
+        All Rights Reserved by Yashashwini R.
+
+    </p>
 
 </footer>
-</body>
 
+
+</body>
 </html>

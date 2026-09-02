@@ -3,7 +3,8 @@
 <head>
     <title>EV Charging Station Finder</title>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
@@ -11,13 +12,12 @@
 <header class="header">
 
     <div class="logo">
-        ⚡ EV Charging station Finder
+        ⚡ EV Charging Station Finder
     </div>
 
     <nav>
         <a href="/">Home</a>
         <a href="/about">About</a>
-        
         <a href="/features">Features</a>
         <a href="/contact">Contact</a>
     </nav>
@@ -28,8 +28,6 @@
     </div>
 
 </header>
-
-<body>
 
 
 {% with messages = get_flashed_messages() %}
@@ -47,35 +45,131 @@
 
     <h2>Book Charging Slot</h2>
 
+
     <form method="POST">
 
-        <label>Vehicle Number</label>
+        <!-- =================================
+             CHARGING INFORMATION
+        ================================== -->
 
-        <input type="text"
-               name="vehicle_number"
-               required>
+        <div class="charging-info">
+
+            <h3>⚡ Charging Hours</h3>
+
+            <p>
+                Station operates from
+                <strong>6:00 AM to 8:00 PM</strong>
+            </p>
+
+            <p>
+                🕐 Each charging slot is
+                <strong>2 hours</strong>
+            </p>
+
+            <p>
+                ⏳ Booking must be made at least
+                <strong>3 hours in advance</strong>
+            </p>
+
+            <p id="currentTime">
+                🕒 Current Time: Loading...
+            </p>
+
+            <p id="minimumTime">
+                ⏰ Earliest Booking Time: Loading...
+            </p>
+
+        </div>
 
 
-        <label>Booking Date</label>
+        <!-- =================================
+             VEHICLE NUMBER
+        ================================== -->
 
-        <input type="date"
-               id="booking_date"
-               name="booking_date"
-               required>
+        <label for="vehicle_number">
+            Vehicle Number
+        </label>
+
+        <input
+            type="text"
+            id="vehicle_number"
+            name="vehicle_number"
+            placeholder="Enter vehicle number"
+            required
+        >
 
 
-        <label>Booking Time</label>
+        <!-- =================================
+             BOOKING DATE
+        ================================== -->
 
-        <input type="time"
-               id="booking_time"
-               name="booking_time"
-               required>
+        <label for="booking_date">
+            Booking Date
+        </label>
+
+        <input
+            type="date"
+            id="booking_date"
+            name="booking_date"
+            required
+        >
 
 
-        <p class="booking-note">
-            Booking time must be at least 3 hours from the current time.
-        </p>
+        <!-- =================================
+             BOOKING TIME
+        ================================== -->
 
+        <label for="booking_time">
+            Select Charging Slot
+        </label>
+
+        <select
+            id="booking_time"
+            name="booking_time"
+            required
+        >
+
+            <option value="">
+                -- Select Charging Slot --
+            </option>
+
+            <option value="06:00">
+                6:00 AM - 8:00 AM
+            </option>
+
+            <option value="08:00">
+                8:00 AM - 10:00 AM
+            </option>
+
+            <option value="10:00">
+                10:00 AM - 12:00 PM
+            </option>
+
+            <option value="12:00">
+                12:00 PM - 2:00 PM
+            </option>
+
+            <option value="14:00">
+                2:00 PM - 4:00 PM
+            </option>
+
+            <option value="16:00">
+                4:00 PM - 6:00 PM
+            </option>
+
+            <option value="18:00">
+                6:00 PM - 8:00 PM
+            </option>
+
+        </select>
+
+
+        <p id="timeMessage"></p>
+
+
+        <!-- =================================
+             CONFIRM BUTTON
+        ================================== -->
 
         <button type="submit">
             Confirm Booking
@@ -88,105 +182,458 @@
 
 <script>
 
-const dateInput = document.getElementById("booking_date");
-const timeInput = document.getElementById("booking_time");
+/* ==========================================
+   HTML ELEMENTS
+========================================== */
 
-const now = new Date();
+const dateInput =
+    document.getElementById("booking_date");
 
+const timeInput =
+    document.getElementById("booking_time");
 
-const minimumTime = new Date(
-    now.getTime() + (3 * 60 * 60 * 1000)
-);
+const timeMessage =
+    document.getElementById("timeMessage");
 
+const currentTimeDisplay =
+    document.getElementById("currentTime");
 
-
-const year = minimumTime.getFullYear();
-
-const month = String(
-    minimumTime.getMonth() + 1
-).padStart(2, '0');
-
-const day = String(
-    minimumTime.getDate()
-).padStart(2, '0');
-
-const minimumDate = `${year}-${month}-${day}`;
+const minimumTimeDisplay =
+    document.getElementById("minimumTime");
 
 
+/* ==========================================
+   CHARGING SLOTS
+========================================== */
 
-dateInput.min = minimumDate;
+const slots = [
+
+    {
+        value: "06:00",
+        startHour: 6,
+        startMinute: 0,
+        endHour: 8
+    },
+
+    {
+        value: "08:00",
+        startHour: 8,
+        startMinute: 0,
+        endHour: 10
+    },
+
+    {
+        value: "10:00",
+        startHour: 10,
+        startMinute: 0,
+        endHour: 12
+    },
+
+    {
+        value: "12:00",
+        startHour: 12,
+        startMinute: 0,
+        endHour: 14
+    },
+
+    {
+        value: "14:00",
+        startHour: 14,
+        startMinute: 0,
+        endHour: 16
+    },
+
+    {
+        value: "16:00",
+        startHour: 16,
+        startMinute: 0,
+        endHour: 18
+    },
+
+    {
+        value: "18:00",
+        startHour: 18,
+        startMinute: 0,
+        endHour: 20
+    }
+
+];
 
 
+/* ==========================================
+   FORMAT TIME
+========================================== */
 
-dateInput.addEventListener("change", function () {
+function formatTime(date) {
 
-    if (dateInput.value === minimumDate) {
+    return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
 
-        const hours = String(
-            minimumTime.getHours()
-        ).padStart(2, '0');
+}
 
-        const minutes = String(
-            minimumTime.getMinutes()
-        ).padStart(2, '0');
 
-        timeInput.min = `${hours}:${minutes}`;
+/* ==========================================
+   GET DATE IN YYYY-MM-DD FORMAT
+========================================== */
 
-    } else {
+function getDateString(date) {
 
-        timeInput.removeAttribute("min");
+    const year =
+        date.getFullYear();
+
+    const month =
+        String(date.getMonth() + 1)
+        .padStart(2, "0");
+
+    const day =
+        String(date.getDate())
+        .padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+
+}
+
+
+/* ==========================================
+   UPDATE CURRENT TIME
+========================================== */
+
+function updateCurrentTime() {
+
+    const now = new Date();
+
+    currentTimeDisplay.innerHTML =
+        "🕒 Current Time: <strong>" +
+        formatTime(now) +
+        "</strong>";
+
+}
+
+
+/* ==========================================
+   CHECK AND UPDATE SLOTS
+========================================== */
+
+function updateSlots() {
+
+    const now = new Date();
+
+    const today =
+        getDateString(now);
+
+    /*
+       Booking must be at least
+       3 hours from current time.
+    */
+
+    const minimumBookingTime =
+        new Date(
+            now.getTime() +
+            (3 * 60 * 60 * 1000)
+        );
+
+
+    const minimumDate =
+        getDateString(minimumBookingTime);
+
+
+    /*
+       Show earliest booking time.
+    */
+
+    minimumTimeDisplay.innerHTML =
+        "⏰ Earliest Booking Time: <strong>" +
+        formatTime(minimumBookingTime) +
+        "</strong>";
+
+
+    /*
+       Minimum selectable date.
+    */
+
+    dateInput.min = minimumDate;
+
+
+    const selectedDate =
+        dateInput.value;
+
+
+    /*
+       User has not selected a date.
+    */
+
+    if (!selectedDate) {
+
+        timeMessage.innerHTML =
+            "📅 Please select a booking date.";
+
+        return;
+    }
+
+
+    /* ======================================
+       FUTURE DATE
+    ====================================== */
+
+    if (selectedDate > today) {
+
+        for (
+            let i = 1;
+            i < timeInput.options.length;
+            i++
+        ) {
+
+            timeInput.options[i].disabled =
+                false;
+
+        }
+
+        timeInput.value = "";
+
+        timeMessage.innerHTML =
+            "✅ All charging slots are available for the selected date.";
+
+        return;
+    }
+
+
+    /* ======================================
+       TODAY
+    ====================================== */
+
+    if (selectedDate === today) {
+
+        let validSlots = 0;
+
+
+        for (
+            let i = 1;
+            i < timeInput.options.length;
+            i++
+        ) {
+
+            const option =
+                timeInput.options[i];
+
+            const slot =
+                slots[i - 1];
+
+
+            /*
+               Create today's slot start time.
+            */
+
+            const slotStart =
+                new Date();
+
+            slotStart.setHours(
+                slot.startHour,
+                slot.startMinute,
+                0,
+                0
+            );
+
+
+            /*
+               Slot must start at least
+               3 hours from current time.
+            */
+
+            if (
+                slotStart >= minimumBookingTime
+            ) {
+
+                option.disabled =
+                    false;
+
+                validSlots++;
+
+            }
+            else {
+
+                option.disabled =
+                    true;
+
+            }
+
+        }
+
+
+        /*
+           Clear selected slot if disabled.
+        */
+
+        if (
+            timeInput.selectedOptions.length > 0 &&
+            timeInput.selectedOptions[0].disabled
+        ) {
+
+            timeInput.value = "";
+
+        }
+
+
+        /*
+           Show message.
+        */
+
+        if (validSlots > 0) {
+
+            timeMessage.innerHTML =
+                "✅ Available slots are shown according to the current time and 3-hour booking rule.";
+
+        }
+        else {
+
+            timeMessage.innerHTML =
+                "❌ No charging slots are available today. Please select another date.";
+
+        }
+
+        return;
+    }
+
+
+    /* ======================================
+       PAST DATE
+    ====================================== */
+
+    if (selectedDate < today) {
+
+        for (
+            let i = 1;
+            i < timeInput.options.length;
+            i++
+        ) {
+
+            timeInput.options[i].disabled =
+                true;
+
+        }
+
+        timeInput.value = "";
+
+        timeMessage.innerHTML =
+            "❌ Previous dates cannot be selected.";
 
     }
 
-});
+}
+
+
+/* ==========================================
+   DATE CHANGE
+========================================== */
+
+dateInput.addEventListener(
+    "change",
+    updateSlots
+);
+
+
+/* ==========================================
+   UPDATE CURRENT TIME EVERY SECOND
+========================================== */
+
+updateCurrentTime();
+
+setInterval(
+    updateCurrentTime,
+    1000
+);
+
+
+/* ==========================================
+   UPDATE SLOTS EVERY MINUTE
+========================================== */
+
+updateSlots();
+
+setInterval(
+    updateSlots,
+    60000
+);
 
 </script>
+
+
+<!-- ==========================================
+     FOOTER
+========================================== -->
+
 <footer class="footer">
 
-<div class="footer-content">
+    <div class="footer-content">
 
-<div class="footer-section">
+        <div class="footer-section">
 
-<h3>EV Charging Station Finder</h3>
+            <h3>EV Charging Station Finder</h3>
 
-<p>
-Helping EV owners find nearby charging stations,
-book slots online and save time.
-</p>
+            <p>
+                Helping EV owners find nearby charging stations,
+                book slots online and save time.
+            </p>
 
-</div>
+        </div>
 
-<div class="footer-section">
 
-<h3>Quick Links</h3>
+        <div class="footer-section">
 
-<p><a href="/">Home</a></p>
-<p><a href="/login">User Login</a></p>
-<p><a href="/register">Register</a></p>
-<p><a href="/admin_login">Admin Login</a></p>
+            <h3>Quick Links</h3>
 
-</div>
+            <p>
+                <a href="/">Home</a>
+            </p>
 
-<div class="footer-section">
+            <p>
+                <a href="/login">User Login</a>
+            </p>
 
-<h3>Contact Us</h3>
+            <p>
+                <a href="/register">Register</a>
+            </p>
 
-<p>📧 support@evfinder.com</p>
+            <p>
+                <a href="/admin_login">Admin Login</a>
+            </p>
 
-<p>📞 +91 9876543210</p>
+        </div>
 
-<p>📍 Bengaluru, India</p>
 
-</div>
+        <div class="footer-section">
 
-</div>
+            <h3>Contact Us</h3>
 
-<hr>
+            <p>
+                📧 support@evfinder.com
+            </p>
 
-<p class="copyright">
-@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved by Yashashwini R.
-</p>
+            <p>
+                📞 +91 9876543210
+            </p>
+
+            <p>
+                📍 Bengaluru, India
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <hr>
+
+
+    <p class="copyright">
+
+        @ 2026 EV Charging Station Finder & Booking System |
+        All Rights Reserved by Yashashwini R.
+
+    </p>
 
 </footer>
+
 </body>
 </html>

@@ -34,13 +34,31 @@
 
 <form method="POST">
 
-<label>Email</label><br>
-<input type="email" name="email" required><br><br>
+<form method="POST" autocomplete="off">
 
-<label>Password</label><br>
-<input type="password" name="password" required><br><br>
+    <input
+        type="email"
+        name="email"
+        placeholder="Enter Email"
+        autocomplete="off"
+        required
+    >
 
-<button type="submit">Login</button>
+    <input
+        type="password"
+        name="password"
+        placeholder="Enter Password"
+        autocomplete="new-password"
+        required
+    >
+
+    <button type="submit">
+         Login
+    </button>
+
+</form>
+
+
 
 </form>
 

@@ -35,9 +35,23 @@
 
 <form method="POST" action="/login">
 
-    <input type="email" name="email" placeholder="Email" required>
+    
 
-    <input type="password" name="password" placeholder="Password" required>
+   <input
+    type="email"
+    name="email"
+    placeholder="Enter Email"
+    autocomplete="off"
+    required
+>
+
+<input
+    type="password"
+    name="password"
+    placeholder="Enter Password"
+    autocomplete="new-password"
+    required
+>
 
     <button type="submit">Login</button>
 

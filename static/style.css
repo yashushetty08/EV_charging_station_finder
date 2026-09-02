@@ -1866,3 +1866,19 @@ table{
     border-radius: 8px;
     font-weight: bold;
 }
+
+
+
+
+
+.alert-message {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 15px;
+    margin: 20px auto;
+    border: 1px solid #ffeeba;
+    border-radius: 8px;
+    width: 80%;
+    text-align: center;
+    font-weight: bold;
+}

@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import mysql.connector
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
 from math import radians, sin, cos, sqrt, atan2
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
 app = Flask(__name__)
@@ -12,7 +13,9 @@ app = Flask(__name__)
 app.secret_key = "ev_secret_key"
 
 
-
+# =========================================================
+# DATABASE CONNECTION
+# =========================================================
 
 db = mysql.connector.connect(
     host="localhost",
@@ -24,39 +27,27 @@ db = mysql.connector.connect(
 cursor = db.cursor()
 
 
+# =========================================================
+# GMAIL SETTINGS
+# =========================================================
+
+SENDER_EMAIL = "yourgmail@gmail.com"
+SENDER_PASSWORD = "YOUR_APP_PASSWORD"
 
 
-def send_confirmation_email(
-    receiver_email,
-    station_name,
-    booking_date,
-    booking_time
-):
+# =========================================================
+# COMMON EMAIL FUNCTION
+# =========================================================
 
-    sender_email = "YOUR_GMAIL@gmail.com"
-    sender_password = "YOUR_APP_PASSWORD"
-
-    subject = "EV Charging Slot Booking Confirmation"
-
-    body = f"""
-Hello,
-
-Your charging slot has been booked successfully.
-
-Station: {station_name}
-Booking Date: {booking_date}
-Booking Time: {booking_time}
-
-Thank you for using EV Charging Station Finder.
-"""
-
-    msg = MIMEText(body)
-
-    msg["Subject"] = subject
-    msg["From"] = sender_email
-    msg["To"] = receiver_email
+def send_email(receiver_email, subject, body):
 
     try:
+
+        msg = MIMEText(body)
+
+        msg["Subject"] = subject
+        msg["From"] = SENDER_EMAIL
+        msg["To"] = receiver_email
 
         server = smtplib.SMTP(
             "smtp.gmail.com",
@@ -66,20 +57,299 @@ Thank you for using EV Charging Station Finder.
         server.starttls()
 
         server.login(
-            sender_email,
-            sender_password
+            SENDER_EMAIL,
+            SENDER_PASSWORD
         )
 
         server.send_message(msg)
 
         server.quit()
 
+        print("Email sent successfully to:", receiver_email)
+
+        return True
+
     except Exception as e:
 
         print("Email error:", e)
 
+        return False
 
 
+# =========================================================
+# LOGIN EMAIL
+# =========================================================
+
+def send_login_email(receiver_email, fullname):
+
+    subject = "EV Charging Station Finder - Login Successful"
+
+    login_time = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    body = f"""
+Hello {fullname},
+
+You have successfully logged in to your EV Charging Station Finder account.
+
+Login Time:
+{login_time}
+
+If this login was not performed by you, please change your password immediately.
+
+Thank you for using EV Charging Station Finder.
+"""
+
+    return send_email(
+        receiver_email,
+        subject,
+        body
+    )
+
+
+# =========================================================
+# BOOKING CONFIRMATION EMAIL
+# =========================================================
+
+def send_confirmation_email(
+    receiver_email,
+    station_name,
+    booking_date,
+    booking_time
+):
+
+    subject = "EV Charging Slot Booking Confirmation"
+
+    body = f"""
+Hello,
+
+Your EV charging station booking has been confirmed successfully.
+
+Booking Details
+----------------------------
+
+Station:
+{station_name}
+
+Booking Date:
+{booking_date}
+
+Booking Time:
+{booking_time}
+
+Status:
+Booked
+
+Please reach the charging station at your scheduled time.
+
+Thank you for using EV Charging Station Finder.
+"""
+
+    return send_email(
+        receiver_email,
+        subject,
+        body
+    )
+
+
+# =========================================================
+# CANCELLATION EMAIL
+# =========================================================
+
+def send_cancellation_email(
+    receiver_email,
+    station_name,
+    booking_date,
+    booking_time,
+    automatic=False
+):
+
+    if automatic:
+
+        subject = "EV Charging Booking Automatically Cancelled"
+
+        reason = """
+You did not attend the charging station within 10 minutes
+after your scheduled booking time.
+"""
+
+    else:
+
+        subject = "EV Charging Booking Cancelled"
+
+        reason = """
+Your booking was cancelled by you.
+"""
+
+
+    body = f"""
+Hello,
+
+Your EV charging station booking has been cancelled.
+
+Booking Details
+----------------------------
+
+Station:
+{station_name}
+
+Booking Date:
+{booking_date}
+
+Booking Time:
+{booking_time}
+
+Reason:
+{reason}
+
+Your charging slot has now been released and is available
+for other users.
+
+Thank you for using EV Charging Station Finder.
+"""
+
+    return send_email(
+        receiver_email,
+        subject,
+        body
+    )
+
+
+# =========================================================
+# AUTOMATIC NO-SHOW BOOKING CANCELLATION
+# =========================================================
+
+def check_expired_bookings():
+
+    try:
+
+        # Use a separate database connection because
+        # this function runs in a background thread.
+
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="yashu020",
+            database="ev_charging"
+        )
+
+        job_cursor = connection.cursor()
+
+        now = datetime.now()
+
+
+        job_cursor.execute("""
+            SELECT
+                b.booking_id,
+                b.user_email,
+                b.station_id,
+                s.station_name,
+                b.booking_date,
+                b.booking_time
+            FROM bookings b
+            JOIN stations s
+            ON b.station_id = s.station_id
+            WHERE b.status = 'Booked'
+        """)
+
+
+        expired_bookings = job_cursor.fetchall()
+
+
+        for booking in expired_bookings:
+
+            booking_id = booking[0]
+            user_email = booking[1]
+            station_id = booking[2]
+            station_name = booking[3]
+            booking_date = booking[4]
+            booking_time = booking[5]
+
+
+            # Convert booking date and time into datetime
+
+            booking_datetime = datetime.combine(
+                booking_date,
+                booking_time
+            )
+
+
+            # Allow user 10 minutes after booking time
+
+            expiry_time = (
+                booking_datetime
+                + timedelta(minutes=10)
+            )
+
+
+            # Check whether 10 minutes have passed
+
+            if now >= expiry_time:
+
+
+                # Cancel booking
+
+                job_cursor.execute("""
+                    UPDATE bookings
+                    SET status = 'Cancelled'
+                    WHERE booking_id = %s
+                    AND status = 'Booked'
+                """, (booking_id,))
+
+
+                # Make sure only one process cancelled it
+
+                if job_cursor.rowcount == 1:
+
+
+                    # Return charging slot
+
+                    job_cursor.execute("""
+                        UPDATE stations
+                        SET available_slots =
+                            available_slots + 1
+                        WHERE station_id = %s
+                    """, (station_id,))
+
+
+                    connection.commit()
+
+
+                    # Send automatic cancellation email
+
+                    send_cancellation_email(
+                        user_email,
+                        station_name,
+                        booking_date,
+                        booking_time,
+                        automatic=True
+                    )
+
+
+                    print(
+                        "Booking",
+                        booking_id,
+                        "automatically cancelled."
+                    )
+
+
+        job_cursor.close()
+
+        connection.close()
+
+
+    except Exception as e:
+
+        print(
+            "Automatic cancellation error:",
+            e
+        )
+
+
+# =========================================================
+# HOME
+# =========================================================
 
 @app.route('/')
 def home():
@@ -89,7 +359,9 @@ def home():
     )
 
 
-
+# =========================================================
+# REGISTER
+# =========================================================
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -105,9 +377,7 @@ def register():
         password = request.form['password']
 
 
-       
         # PASSWORD VALIDATION
-        
 
         if len(password) < 8:
 
@@ -167,9 +437,7 @@ def register():
             )
 
 
-        
         # CHECK EMAIL
-      
 
         cursor.execute(
             "SELECT * FROM users WHERE email=%s",
@@ -190,9 +458,8 @@ def register():
             )
 
 
-       
         # INSERT USER
-        
+
         sql = """
         INSERT INTO users
         (
@@ -241,9 +508,9 @@ def register():
     )
 
 
-
+# =========================================================
 # LOGIN
-
+# =========================================================
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -279,6 +546,14 @@ def login():
             session['email'] = user[2]
 
 
+            # SEND LOGIN EMAIL
+
+            send_login_email(
+                session['email'],
+                session['fullname']
+            )
+
+
             return redirect(
                 url_for('dashboard')
             )
@@ -299,8 +574,9 @@ def login():
     )
 
 
-
+# =========================================================
 # DASHBOARD
+# =========================================================
 
 @app.route('/dashboard')
 def dashboard():
@@ -318,33 +594,51 @@ def dashboard():
     )
 
 
+# =========================================================
 # SEARCH STATION
-
+# =========================================================
 
 @app.route('/search_station', methods=['GET', 'POST'])
 def search_station():
 
     if request.method == 'POST':
 
-        city = request.form['city']
+        city = request.form.get('city', '').strip()
 
-        cursor.execute(
-            """
-            SELECT *
+        cursor.execute("""
+            SELECT
+                station_id,
+                station_name,
+                city,
+                address,
+                charger_type,
+                available_slots,
+                price,
+                opening_time,
+                closing_time,
+                latitude,
+                longitude
             FROM stations
             WHERE city LIKE %s
-            """,
-            ('%' + city + '%',)
-        )
+        """, ('%' + city + '%',))
 
     else:
 
-        cursor.execute(
-            """
-            SELECT *
+        cursor.execute("""
+            SELECT
+                station_id,
+                station_name,
+                city,
+                address,
+                charger_type,
+                available_slots,
+                price,
+                opening_time,
+                closing_time,
+                latitude,
+                longitude
             FROM stations
-            """
-        )
+        """)
 
     stations = cursor.fetchall()
 
@@ -354,94 +648,118 @@ def search_station():
     )
 
 
+# =========================================================
 # BOOK CHARGING SLOT
+# =========================================================
 
-
-@app.route(
-    '/book/<int:station_id>',
-    methods=['GET', 'POST']
-)
+@app.route('/book/<int:station_id>', methods=['GET', 'POST'])
 def book(station_id):
 
     if 'fullname' not in session:
+        return redirect(url_for('login'))
 
-        return redirect(
-            url_for('login')
-        )
+    # ==========================================
+    # GET STATION DETAILS
+    # ==========================================
 
-
-    
-    # CHECK STATION
-    
-
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT
             available_slots,
-            station_name
+            station_name,
+            opening_time,
+            closing_time
         FROM stations
         WHERE station_id=%s
-        """,
-        (station_id,)
-    )
-
+    """, (station_id,))
 
     station = cursor.fetchone()
 
-
     if not station:
+        flash("Station not found!")
+        return redirect(url_for('search_station'))
 
-        flash(
-            "Station not found!"
-        )
-
-        return redirect(
-            url_for('search_station')
-        )
-
-
-    available_slots = station[0]
-
+    station_capacity = station[0]
     station_name = station[1]
+    opening_time = station[2]
+    closing_time = station[3]
+
+    # If timing is empty in database, use default timing
+    if opening_time is None:
+        opening_time = datetime.strptime(
+            "06:00",
+            "%H:%M"
+        ).time()
+
+    if closing_time is None:
+        closing_time = datetime.strptime(
+            "20:00",
+            "%H:%M"
+        ).time()
 
 
-    
-    # CHECK AVAILABLE SLOTS
-    
+    # ==========================================
+    # ALLOWED 2-HOUR SLOTS
+    # ==========================================
 
-    if available_slots <= 0:
+    allowed_slots = [
+        "06:00",
+        "08:00",
+        "10:00",
+        "12:00",
+        "14:00",
+        "16:00",
+        "18:00"
+    ]
 
-        flash(
-            "Sorry! All charging slots are filled!"
-        )
 
-        return redirect(
-            url_for('search_station')
-        )
-
-
-    
+    # ==========================================
     # BOOKING
-  
+    # ==========================================
 
     if request.method == 'POST':
 
-        vehicle_number = request.form[
-            'vehicle_number'
-        ]
-
-        booking_date = request.form[
-            'booking_date'
-        ]
-
-        booking_time = request.form[
-            'booking_time'
-        ]
+        vehicle_number = request.form.get('vehicle_number')
+        booking_date = request.form.get('booking_date')
+        booking_time = request.form.get('booking_time')
 
 
-       
+        # ======================================
+        # CHECK EMPTY VALUES
+        # ======================================
+
+        if not vehicle_number or not booking_date or not booking_time:
+
+            flash("Please fill all booking details.")
+
+            return redirect(
+                url_for(
+                    'book',
+                    station_id=station_id
+                )
+            )
+
+
+        # ======================================
+        # CHECK VALID 2-HOUR SLOT
+        # ======================================
+
+        if booking_time not in allowed_slots:
+
+            flash(
+                "Please select a valid 2-hour charging slot."
+            )
+
+            return redirect(
+                url_for(
+                    'book',
+                    station_id=station_id
+                )
+            )
+
+
+        # ======================================
         # DATE + TIME VALIDATION
-        
+        # ======================================
 
         try:
 
@@ -467,9 +785,9 @@ def book(station_id):
         current_datetime = datetime.now()
 
 
-        
+        # ======================================
         # PREVIOUS DATE / TIME
-       
+        # ======================================
 
         if booking_datetime <= current_datetime:
 
@@ -485,20 +803,20 @@ def book(station_id):
             )
 
 
-        
-        # MINIMUM 3 HOURS GAP
-        
+        # ======================================
+        # 3 HOURS ADVANCE BOOKING
+        # ======================================
 
         minimum_booking_time = (
-            current_datetime.timestamp()
-            + (3 * 60 * 60)
+            current_datetime +
+            timedelta(hours=3)
         )
 
-
-        if booking_datetime.timestamp() < minimum_booking_time:
+        if booking_datetime < minimum_booking_time:
 
             flash(
-                "Booking time must be at least 3 hours from the current time."
+                "Booking time must be at least "
+                "3 hours from the current time."
             )
 
             return redirect(
@@ -509,73 +827,60 @@ def book(station_id):
             )
 
 
-        
-        # CHECK SLOT AGAIN
-        
+        # ======================================
+        # STATION OPENING / CLOSING TIME
+        # ======================================
 
-        cursor.execute(
-            """
-            SELECT available_slots
-            FROM stations
-            WHERE station_id=%s
-            """,
-            (station_id,)
-        )
+        selected_time = booking_datetime.time()
 
-
-        current_slots = cursor.fetchone()
-
-
-        if not current_slots:
+        if (
+            selected_time < opening_time
+            or selected_time >= closing_time
+        ):
 
             flash(
-                "Station not found!"
+                "Booking is available only between "
+                f"{opening_time.strftime('%I:%M %p')} and "
+                f"{closing_time.strftime('%I:%M %p')}."
             )
 
             return redirect(
-                url_for('search_station')
+                url_for(
+                    'book',
+                    station_id=station_id
+                )
             )
 
 
-        if current_slots[0] <= 0:
+        # ======================================
+        # CHECK SAME SLOT BOOKINGS
+        # ======================================
 
-            flash(
-                "Sorry! All charging slots are filled!"
-            )
-
-            return redirect(
-                url_for('search_station')
-            )
-
-
-        
-        # CHECK SAME USER / SAME STATION / SAME TIME
-     
-
-        cursor.execute(
-            """
-            SELECT booking_id
+        cursor.execute("""
+            SELECT COUNT(*)
             FROM bookings
             WHERE station_id=%s
             AND booking_date=%s
             AND booking_time=%s
             AND status='Booked'
-            """,
-            (
-                station_id,
-                booking_date,
-                booking_time
-            )
-        )
+        """, (
+            station_id,
+            booking_date,
+            booking_time
+        ))
+
+        booked_count = cursor.fetchone()[0]
 
 
-        existing_booking = cursor.fetchone()
+        # ======================================
+        # CHECK SLOT CAPACITY
+        # ======================================
 
-
-        if existing_booking:
+        if booked_count >= station_capacity:
 
             flash(
-                "This charging time is already booked. Please choose another time."
+                "This charging slot is full. "
+                "Please select another time slot."
             )
 
             return redirect(
@@ -586,12 +891,11 @@ def book(station_id):
             )
 
 
-        
+        # ======================================
         # INSERT BOOKING
-       
+        # ======================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO bookings
             (
                 user_email,
@@ -602,39 +906,20 @@ def book(station_id):
                 status
             )
             VALUES (%s,%s,%s,%s,%s,'Booked')
-            """,
-            (
-                session['email'],
-                station_id,
-                booking_date,
-                booking_time,
-                vehicle_number
-            )
-        )
-
-
-        
-        # REDUCE SLOT
-        
-
-        cursor.execute(
-            """
-            UPDATE stations
-            SET available_slots =
-                available_slots - 1
-            WHERE station_id=%s
-            AND available_slots > 0
-            """,
-            (station_id,)
-        )
-
+        """, (
+            session['email'],
+            station_id,
+            booking_date,
+            booking_time,
+            vehicle_number
+        ))
 
         db.commit()
 
 
-       
-        # SEND EMAIL
-        
+        # ======================================
+        # BOOKING CONFIRMATION EMAIL
+        # ======================================
 
         try:
 
@@ -647,26 +932,41 @@ def book(station_id):
 
         except Exception as e:
 
-            print("Confirmation email failed:",e)
+            print(
+                "Confirmation email failed:",
+                e
+            )
 
 
-        flash("Booking Successful!")
+        # ======================================
+        # SUCCESS MESSAGE
+        # ======================================
 
+        flash(
+            "Booking Successful!"
+        )
 
         return redirect(
             url_for('booking_history')
         )
 
 
+    # ==========================================
+    # SHOW BOOKING PAGE
+    # ==========================================
+
     return render_template(
         'book.html',
-        station_id=station_id
+        station_id=station_id,
+        station_name=station_name,
+        opening_time=opening_time,
+        closing_time=closing_time,
+        station_capacity=station_capacity
     )
 
-
-
+# =========================================================
 # BOOKING HISTORY
-
+# =========================================================
 
 @app.route('/booking_history')
 def booking_history():
@@ -708,9 +1008,9 @@ def booking_history():
     )
 
 
-
+# =========================================================
 # CANCEL BOOKING
-
+# =========================================================
 
 @app.route(
     '/cancel_booking/<int:booking_id>'
@@ -724,14 +1024,21 @@ def cancel_booking(booking_id):
         )
 
 
-    # Check booking belongs to logged-in user
+    # CHECK BOOKING
 
     cursor.execute(
         """
-        SELECT station_id, status
-        FROM bookings
-        WHERE booking_id=%s
-        AND user_email=%s
+        SELECT
+            b.station_id,
+            b.status,
+            b.booking_date,
+            b.booking_time,
+            s.station_name
+        FROM bookings b
+        JOIN stations s
+        ON b.station_id = s.station_id
+        WHERE b.booking_id=%s
+        AND b.user_email=%s
         """,
         (
             booking_id,
@@ -758,6 +1065,12 @@ def cancel_booking(booking_id):
 
     status = booking[1]
 
+    booking_date = booking[2]
+
+    booking_time = booking[3]
+
+    station_name = booking[4]
+
 
     if status != 'Booked':
 
@@ -770,7 +1083,7 @@ def cancel_booking(booking_id):
         )
 
 
-    # Cancel booking
+    # CANCEL BOOKING
 
     cursor.execute(
         """
@@ -778,6 +1091,7 @@ def cancel_booking(booking_id):
         SET status='Cancelled'
         WHERE booking_id=%s
         AND user_email=%s
+        AND status='Booked'
         """,
         (
             booking_id,
@@ -786,25 +1100,54 @@ def cancel_booking(booking_id):
     )
 
 
-    # Return slot
+    # Only return the slot if the booking
+    # was successfully cancelled
 
-    cursor.execute(
-        """
-        UPDATE stations
-        SET available_slots =
-            available_slots + 1
-        WHERE station_id=%s
-        """,
-        (station_id,)
-    )
+    if cursor.rowcount == 1:
+
+        cursor.execute(
+            """
+            UPDATE stations
+            SET available_slots =
+                available_slots + 1
+            WHERE station_id=%s
+            """,
+            (station_id,)
+        )
 
 
-    db.commit()
+        db.commit()
 
 
-    flash(
-        "Booking Cancelled Successfully!"
-    )
+        # SEND MANUAL CANCELLATION EMAIL
+
+        try:
+
+            send_cancellation_email(
+                session['email'],
+                station_name,
+                booking_date,
+                booking_time,
+                automatic=False
+            )
+
+        except Exception as e:
+
+            print(
+                "Cancellation email failed:",
+                e
+            )
+
+
+        flash(
+            "Booking Cancelled Successfully!"
+        )
+
+    else:
+
+        flash(
+            "Booking could not be cancelled."
+        )
 
 
     return redirect(
@@ -812,8 +1155,9 @@ def cancel_booking(booking_id):
     )
 
 
-
+# =========================================================
 # LOGOUT
+# =========================================================
 
 @app.route('/logout')
 def logout():
@@ -825,9 +1169,9 @@ def logout():
     )
 
 
-
+# =========================================================
 # OWNER LOGIN
-
+# =========================================================
 
 @app.route(
     '/owner_login',
@@ -878,9 +1222,9 @@ def owner_login():
     )
 
 
-
+# =========================================================
 # OWNER DASHBOARD
-
+# =========================================================
 
 @app.route('/owner_dashboard')
 def owner_dashboard():
@@ -940,9 +1284,9 @@ def owner_dashboard():
     )
 
 
-
+# =========================================================
 # MANAGE STATION
-
+# =========================================================
 
 @app.route('/manage_station')
 def manage_station():
@@ -967,9 +1311,9 @@ def manage_station():
     )
 
 
-
+# =========================================================
 # VIEW BOOKINGS
-
+# =========================================================
 
 @app.route('/view_bookings')
 def view_bookings():
@@ -987,9 +1331,9 @@ def view_bookings():
     )
 
 
-
+# =========================================================
 # ADMIN LOGIN
-
+# =========================================================
 
 @app.route(
     '/admin_login',
@@ -1040,9 +1384,9 @@ def admin_login():
     )
 
 
-
+# =========================================================
 # ADMIN DASHBOARD
-
+# =========================================================
 
 @app.route('/admin_dashboard')
 def admin_dashboard():
@@ -1084,9 +1428,9 @@ def admin_dashboard():
     )
 
 
-
+# =========================================================
 # MANAGE USERS
-
+# =========================================================
 
 @app.route('/manage_users')
 def manage_users():
@@ -1104,9 +1448,9 @@ def manage_users():
     )
 
 
-
+# =========================================================
 # MANAGE STATIONS
-
+# =========================================================
 
 @app.route('/manage_stations')
 def manage_stations():
@@ -1124,9 +1468,9 @@ def manage_stations():
     )
 
 
-
+# =========================================================
 # ALL BOOKINGS
-
+# =========================================================
 
 @app.route(
     '/all_bookings',
@@ -1188,12 +1532,16 @@ def all_bookings():
     )
 
 
-
+# =========================================================
 # REPORTS
-
+# =========================================================
 
 @app.route('/reports')
 def reports():
+
+    # ==========================================
+    # TOTAL USERS
+    # ==========================================
 
     cursor.execute(
         "SELECT COUNT(*) FROM users"
@@ -1202,6 +1550,10 @@ def reports():
     total_users = cursor.fetchone()[0]
 
 
+    # ==========================================
+    # TOTAL STATIONS
+    # ==========================================
+
     cursor.execute(
         "SELECT COUNT(*) FROM stations"
     )
@@ -1209,12 +1561,20 @@ def reports():
     total_stations = cursor.fetchone()[0]
 
 
+    # ==========================================
+    # TOTAL BOOKINGS
+    # ==========================================
+
     cursor.execute(
         "SELECT COUNT(*) FROM bookings"
     )
 
     total_bookings = cursor.fetchone()[0]
 
+
+    # ==========================================
+    # TOTAL REVENUE
+    # ==========================================
 
     cursor.execute(
         """
@@ -1232,6 +1592,10 @@ def reports():
     total_revenue = cursor.fetchone()[0]
 
 
+    # ==========================================
+    # MONTHLY BOOKINGS
+    # ==========================================
+
     cursor.execute(
         """
         SELECT
@@ -1246,23 +1610,69 @@ def reports():
         """
     )
 
-
     monthly_bookings = cursor.fetchall()
 
 
-    return render_template(
-        "reports.html",
-        total_users=total_users,
-        total_stations=total_stations,
-        total_bookings=total_bookings,
-        total_revenue=total_revenue,
-        monthly_bookings=monthly_bookings
+    # ==========================================
+    # DATE-WISE BOOKING REPORT
+    # ==========================================
+
+    cursor.execute(
+        """
+        SELECT
+            booking_date,
+            COUNT(*) AS total_bookings,
+
+            SUM(
+                CASE
+                    WHEN status='Booked'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS booked,
+
+            SUM(
+                CASE
+                    WHEN status='Cancelled'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS cancelled
+
+        FROM bookings
+
+        GROUP BY booking_date
+
+        ORDER BY booking_date DESC
+        """
     )
 
+    date_wise_bookings = cursor.fetchall()
 
 
+    # ==========================================
+    # SEND DATA TO REPORTS PAGE
+    # ==========================================
+
+    return render_template(
+        "reports.html",
+
+        total_users=total_users,
+
+        total_stations=total_stations,
+
+        total_bookings=total_bookings,
+
+        total_revenue=total_revenue,
+
+        monthly_bookings=monthly_bookings,
+
+        date_wise_bookings=date_wise_bookings
+    )
+
+# =========================================================
 # DELETE USER
-
+# =========================================================
 
 @app.route(
     '/delete_user/<int:user_id>'
@@ -1282,9 +1692,9 @@ def delete_user(user_id):
     )
 
 
-
+# =========================================================
 # ADD STATION
-
+# =========================================================
 
 @app.route(
     '/add_station',
@@ -1381,9 +1791,9 @@ def add_station():
     )
 
 
-
+# =========================================================
 # EDIT STATION
-
+# =========================================================
 
 @app.route(
     '/edit_station/<int:station_id>',
@@ -1486,8 +1896,9 @@ def edit_station(station_id):
     )
 
 
-
+# =========================================================
 # DELETE STATION
+# =========================================================
 
 @app.route(
     '/delete_station/<int:station_id>'
@@ -1516,9 +1927,9 @@ def delete_station(station_id):
     )
 
 
-
+# =========================================================
 # PROFILE
-
+# =========================================================
 
 @app.route('/profile')
 def profile():
@@ -1555,73 +1966,103 @@ def profile():
     )
 
 
-
+# =========================================================
 # EDIT PROFILE
-
+# =========================================================
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
 
     if 'email' not in session:
-        return redirect(url_for('login'))
+
+        return redirect(
+            url_for('login')
+        )
+
 
     email = session['email']
+
 
     if request.method == 'POST':
 
         fullname = request.form['fullname']
+
         phone = request.form['phone']
+
         gender = request.form['gender']
+
         address = request.form['address']
+
         vehicle_number = request.form['vehicle_number']
 
-        # Update profile
-        cursor.execute("""
+
+        cursor.execute(
+            """
             UPDATE users
-            SET fullname = %s,
-                phone = %s,
-                gender = %s,
-                address = %s,
-                vehicle_number = %s
-            WHERE email = %s
-        """, (
-            fullname,
-            phone,
-            gender,
-            address,
-            vehicle_number,
-            email
-        ))
+            SET fullname=%s,
+                phone=%s,
+                gender=%s,
+                address=%s,
+                vehicle_number=%s
+            WHERE email=%s
+            """,
+            (
+                fullname,
+                phone,
+                gender,
+                address,
+                vehicle_number,
+                email
+            )
+        )
+
 
         db.commit()
 
-        flash("Profile updated successfully!")
 
-        return redirect(url_for('profile'))
+        # Update session name also
+
+        session['fullname'] = fullname
 
 
-    
+        flash(
+            "Profile updated successfully!"
+        )
 
-    cursor.execute("""
-        SELECT fullname,
-               email,
-               phone,
-               gender,
-               address,
-               vehicle_number
+
+        return redirect(
+            url_for('profile')
+        )
+
+
+    cursor.execute(
+        """
+        SELECT
+            fullname,
+            email,
+            phone,
+            gender,
+            address,
+            vehicle_number
         FROM users
-        WHERE email = %s
-    """, (email,))
+        WHERE email=%s
+        """,
+        (email,)
+    )
+
 
     user = cursor.fetchone()
+
 
     return render_template(
         'edit_profile.html',
         user=user
     )
 
-# CHANGE PASSWORD
 
+# =========================================================
+# CHANGE PASSWORD
+# =========================================================
 
 @app.route(
     '/change_password',
@@ -1647,7 +2088,7 @@ def change_password():
         ]
 
 
-        # Password validation
+        # PASSWORD VALIDATION
 
         if len(new_password) < 8:
 
@@ -1771,9 +2212,9 @@ def change_password():
     )
 
 
-
+# =========================================================
 # FORGOT PASSWORD
-
+# =========================================================
 
 @app.route(
     '/forgot_password',
@@ -1790,7 +2231,7 @@ def forgot_password():
         ]
 
 
-        # Validate password
+        # VALIDATE PASSWORD
 
         if len(new_password) < 8:
 
@@ -1910,9 +2351,9 @@ def forgot_password():
     )
 
 
-
+# =========================================================
 # REVIEW
-
+# =========================================================
 
 @app.route(
     '/review/<int:station_id>',
@@ -1977,9 +2418,9 @@ def review(station_id):
     )
 
 
-
+# =========================================================
 # VIEW REVIEWS
-
+# =========================================================
 
 @app.route('/view_reviews')
 def view_reviews():
@@ -2007,53 +2448,79 @@ def view_reviews():
     )
 
 
-
+# =========================================================
 # NEARBY STATIONS - GPS
-
+# =========================================================
 
 @app.route('/nearby_stations')
 def nearby_stations():
 
     latitude = request.args.get('latitude')
+
     longitude = request.args.get('longitude')
 
+
     if not latitude or not longitude:
-        flash("Location not available.")
-        return redirect(url_for('dashboard'))
+
+        flash(
+            "Location not available."
+        )
+
+        return redirect(
+            url_for('dashboard')
+        )
+
 
     latitude = float(latitude)
+
     longitude = float(longitude)
 
-    cursor.execute("""
-        SELECT station_name,
-               city,
-               address,
-               charger_type,
-               available_slots,
-               price,
-               latitude,
-               longitude
+
+    cursor.execute(
+        """
+        SELECT
+            station_name,
+            city,
+            address,
+            charger_type,
+            available_slots,
+            price,
+            latitude,
+            longitude
         FROM stations
-    """)
+        """
+    )
+
 
     stations = cursor.fetchall()
 
+
     nearby_stations = []
 
-    from math import radians, sin, cos, sqrt, atan2
 
     for station in stations:
 
         if station[6] is None or station[7] is None:
+
             continue
 
+
         station_lat = float(station[6])
+
         station_lon = float(station[7])
+
 
         R = 6371
 
-        dlat = radians(station_lat - latitude)
-        dlon = radians(station_lon - longitude)
+
+        dlat = radians(
+            station_lat - latitude
+        )
+
+        dlon = radians(
+            station_lon - longitude
+        )
+
 
         a = (
             sin(dlat / 2) ** 2
@@ -2062,132 +2529,305 @@ def nearby_stations():
             * sin(dlon / 2) ** 2
         )
 
-        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        c = 2 * atan2(
+            sqrt(a),
+            sqrt(1 - a)
+        )
+
 
         distance = R * c
+
 
         if distance <= 10:
 
             nearby_stations.append({
-                'station_name': station[0],
-                'city': station[1],
-                'address': station[2],
-                'charger_type': station[3],
-                'available_slots': station[4],
-                'price': station[5],
-                'distance': round(distance, 2)
+
+                'station_name':
+                    station[0],
+
+                'city':
+                    station[1],
+
+                'address':
+                    station[2],
+
+                'charger_type':
+                    station[3],
+
+                'available_slots':
+                    station[4],
+
+                'price':
+                    station[5],
+
+                'distance':
+                    round(distance, 2)
+
             })
 
-    nearby_stations.sort(key=lambda x: x['distance'])
+
+    nearby_stations.sort(
+        key=lambda x: x['distance']
+    )
+
 
     return render_template(
         'nearby_stations.html',
         stations=nearby_stations
     )
 
+
+# =========================================================
+# ABOUT
+# =========================================================
+
 @app.route('/about')
 def about():
-    return render_template('about.html')
+
+    return render_template(
+        'about.html'
+    )
 
 
-@app.route('/search_stations', methods=['GET', 'POST'])
+# =========================================================
+# SEARCH STATIONS
+# =========================================================
+
+@app.route(
+    '/search_stations',
+    methods=['GET', 'POST']
+)
 def search_stations():
 
     stations = []
 
+
     if request.method == 'POST':
 
-        city = request.form.get('city', '').strip()
+        city = request.form.get(
+            'city',
+            ''
+        ).strip()
+
 
         if city:
-            cursor.execute("""
-                SELECT id,
-                       station_name,
-                       city,
-                       address,
-                       charger_type,
-                       available_slots,
-                       price
+
+            cursor.execute(
+                """
+                SELECT
+                    station_id,
+                    station_name,
+                    city,
+                    address,
+                    charger_type,
+                    available_slots,
+                    price
                 FROM stations
                 WHERE city LIKE %s
                 ORDER BY station_name
-            """, ('%' + city + '%',))
+                """,
+                (
+                    '%' + city + '%',
+                )
+            )
+
 
             stations = cursor.fetchall()
 
+
         else:
-            flash("Please enter a city.")
+
+            flash(
+                "Please enter a city."
+            )
+
 
     else:
 
-        cursor.execute("""
-            SELECT id,
-                   station_name,
-                   city,
-                   address,
-                   charger_type,
-                   available_slots,
-                   price
+        cursor.execute(
+            """
+            SELECT
+                station_id,
+                station_name,
+                city,
+                address,
+                charger_type,
+                available_slots,
+                price
             FROM stations
             ORDER BY station_name
-        """)
+            """
+        )
+
 
         stations = cursor.fetchall()
+
 
     return render_template(
         'search_stations.html',
         stations=stations
     )
 
+
+# =========================================================
+# FEATURES
+# =========================================================
+
 @app.route('/features')
 def features():
-    return render_template('features.html')
+
+    return render_template(
+        'features.html'
+    )
 
 
-@app.route('/contact', methods=['GET', 'POST'])
+# =========================================================
+# CONTACT
+# =========================================================
+
+@app.route(
+    '/contact',
+    methods=['GET', 'POST']
+)
 def contact():
 
     if request.method == 'POST':
 
-        name = request.form.get('name')
-        email = request.form.get('email')
-        subject = request.form.get('subject')
-        message = request.form.get('message')
+        name = request.form.get(
+            'name'
+        )
 
-        cursor.execute("""
+        email = request.form.get(
+            'email'
+        )
+
+        subject = request.form.get(
+            'subject'
+        )
+
+        message = request.form.get(
+            'message'
+        )
+
+
+        cursor.execute(
+            """
             INSERT INTO contact_messages
-            (name, subject, message)
+            (
+                name,
+                subject,
+                message
+            )
             VALUES (%s, %s, %s)
-        """, (name, subject, message))
+            """,
+            (
+                name,
+                subject,
+                message
+            )
+        )
+
 
         db.commit()
 
-        flash("Thank you! Your message has been sent successfully.")
 
-        return redirect(url_for('contact'))
+        flash(
+            "Thank you! Your message has been sent successfully."
+        )
 
-    return render_template('contact.html')
+
+        return redirect(
+            url_for('contact')
+        )
 
 
+    return render_template(
+        'contact.html'
+    )
+
+
+# =========================================================
+# CONTACT MESSAGES
+# =========================================================
 
 @app.route('/contact_messages')
 def contact_messages():
 
-    cursor.execute("""
-        SELECT message_id, name, subject, message, created_at
+    cursor.execute(
+        """
+        SELECT
+            message_id,
+            name,
+            subject,
+            message,
+            created_at
         FROM contact_messages
         ORDER BY created_at DESC
-    """)
+        """
+    )
+
 
     messages = cursor.fetchall()
+
 
     return render_template(
         'contact_messages.html',
         messages=messages
     )
 
+
+# =========================================================
+# START APPLICATION
+# =========================================================
+
 if __name__ == '__main__':
 
+    # Create background scheduler
+
+    scheduler = BackgroundScheduler()
+
+
+    # Check bookings every 1 minute
+
+    scheduler.add_job(
+        func=check_expired_bookings,
+        trigger='interval',
+        minutes=1,
+        max_instances=1,
+        coalesce=True
+    )
+
+
+    scheduler.start()
+
+
+    print(
+        "Automatic booking cancellation scheduler started."
+    )
+
+
+    @app.route('/test_email')
+    def test_email():
+        result = send_email(
+        SENDER_EMAIL,
+        "EV Charging System Test Email",
+        """
+Hello,
+
+This is a test email from the EV Charging Station Finder.
+
+If you received this email, Gmail notification is working correctly.
+"""
+    )
+        if result:
+            return "Test email sent successfully. Check your Gmail inbox."
+        else:
+            return "Email sending failed. Check the VS Code terminal for the error."
+
+
+
     app.run(
-        debug=True
+        debug=True,
+        use_reloader=False
     )
