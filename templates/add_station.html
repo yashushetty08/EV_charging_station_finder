@@ -1,9 +1,18 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>EV Charging Station Finder</title>
+<html lang="en">
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Add New Station - EV Charging Station Finder</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 
 <body>
@@ -11,13 +20,12 @@
 <header class="header">
 
     <div class="logo">
-        ⚡ EV Charging station Finder
+        ⚡ EV Charging Station Finder
     </div>
 
     <nav>
         <a href="/">Home</a>
         <a href="/about">About</a>
-        
         <a href="/features">Features</a>
         <a href="/contact">Contact</a>
     </nav>
@@ -29,99 +37,174 @@
 
 </header>
 
+
 <form method="POST">
 
     <h2>Add New Station</h2>
 
-<label>Station Name</label>
-<input type="text" name="station_name" required>
 
-<label>City</label>
-<input type="text" name="city" required>
+    <label for="station_name">Station Name</label>
 
-<label>Address</label>
-<input type="text" name="address" required>
+    <input type="text"
+           id="station_name"
+           name="station_name"
+           required>
 
-<!-- GPS Location -->
-<label>Latitude</label>
-<input type="text"
-       name="latitude"
-       placeholder="Example: 12.9716"
-       required>
 
-<label>Longitude</label>
-<input type="text"
-       name="longitude"
-       placeholder="Example: 77.5946"
-       required>
+    <label for="city">City</label>
 
-<label>Charger Type</label>
-<select name="charger_type" required>
-    <option value="">Select Charger Type</option>
-    <option value="AC">AC</option>
-    <option value="DC Fast">DC Fast</option>
-</select>
+    <input type="text"
+           id="city"
+           name="city"
+           required>
 
-<label>Available Slots</label>
-<input type="number"
-       name="available_slots"
-       min="0"
-       required>
 
-<label>Price</label>
-<input type="number"
-       name="price"
-       min="0"
-       required>
+    <label for="address">Address</label>
 
-<button type="submit">Add Station</button>
+    <input type="text"
+           id="address"
+           name="address"
+           required>
+
+
+    <!-- GPS Location -->
+
+    <label for="latitude">Latitude</label>
+
+    <input type="text"
+           id="latitude"
+           name="latitude"
+           placeholder="Example: 12.9716"
+           required>
+
+
+    <label for="longitude">Longitude</label>
+
+    <input type="text"
+           id="longitude"
+           name="longitude"
+           placeholder="Example: 77.5946"
+           required>
+
+
+    <label for="charger_type">Charger Type</label>
+
+    <select id="charger_type"
+            name="charger_type"
+            required>
+
+        <option value="">
+            Select Charger Type
+        </option>
+
+        <option value="AC">
+            AC
+        </option>
+
+        <option value="DC Fast">
+            DC Fast
+        </option>
+
+    </select>
+
+
+    <label for="available_slots">Available Slots</label>
+
+    <input type="number"
+           id="available_slots"
+           name="available_slots"
+           min="0"
+           required>
+
+
+    <label for="price">Price</label>
+
+    <input type="number"
+           id="price"
+           name="price"
+           min="0"
+           required>
+
+
+    <button type="submit">
+        Add Station
+    </button>
+
 </form>
+
+
 <footer class="footer">
 
-<div class="footer-content">
+    <div class="footer-content">
 
-<div class="footer-section">
 
-<h3>EV Charging Station Finder</h3>
+        <div class="footer-section">
 
-<p>
-Helping EV owners find nearby charging stations,
-book slots online and save time.
-</p>
+            <h3>EV Charging Station Finder</h3>
 
-</div>
+            <p>
+                Helping EV owners find nearby charging stations,
+                book slots online and save time.
+            </p>
 
-<div class="footer-section">
+        </div>
 
-<h3>Quick Links</h3>
 
-<p><a href="/">Home</a></p>
-<p><a href="/login">User Login</a></p>
-<p><a href="/register">Register</a></p>
-<p><a href="/admin_login">Admin Login</a></p>
+        <div class="footer-section">
 
-</div>
+            <h3>Quick Links</h3>
 
-<div class="footer-section">
+            <p>
+                <a href="/">Home</a>
+            </p>
 
-<h3>Contact Us</h3>
+            <p>
+                <a href="/login">User Login</a>
+            </p>
 
-<p>📧 support@evfinder.com</p>
+            <p>
+                <a href="/register">Register</a>
+            </p>
 
-<p>📞 +91 9876543210</p>
+            <p>
+                <a href="/admin_login">Admin Login</a>
+            </p>
 
-<p>📍 Bengaluru, India</p>
+        </div>
 
-</div>
 
-</div>
+        <div class="footer-section">
 
-<hr>
+            <h3>Contact Us</h3>
 
-<p class="copyright">
-@ 2026 EV Charging Station Finder & Booking System | All Rights Reserved by Yashashwini R.
-</p>
+            <p>
+                📧 support@evfinder.com
+            </p>
+
+            <p>
+                📞 +91 9876543210
+            </p>
+
+            <p>
+                📍 Bengaluru, India
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <hr>
+
+
+    <p class="copyright">
+
+        © 2026 EV Charging Station Finder & Booking System |
+        All Rights Reserved by Yashashwini R.
+
+    </p>
 
 </footer>
+
 </body>
 </html>

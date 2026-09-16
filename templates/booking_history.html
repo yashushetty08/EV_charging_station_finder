@@ -1,11 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>EV Charging Station Finder</title>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>My Bookings - EV Charging Station Finder</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 
 <body>
@@ -31,122 +38,173 @@
 </header>
 
 
-<h2>My Bookings</h2>
+<div class="navbar">
 
-{% set cancelled_booking = namespace(found=false, id='') %}
+    <a href="/dashboard">Dashboard</a>
 
-{% for booking in bookings %}
-    {% if booking[6] == 'Cancelled' and not cancelled_booking.found %}
-        {% set cancelled_booking.found = true %}
-        {% set cancelled_booking.id = booking[0] %}
+    <a href="/search_station">Search Station</a>
+
+    <a href="/booking_history">My Bookings</a>
+
+    <a href="{{ url_for('profile') }}">
+        <button type="button">Profile</button>
+    </a>
+
+    <a href="/logout">Logout</a>
+
+</div>
+
+
+<div class="container">
+
+    <h2>My Bookings</h2>
+
+
+    <!-- Automatic Cancellation Message -->
+
+    {% set cancelled_booking = namespace(found=false, id='') %}
+
+    {% for booking in bookings %}
+
+        {% if booking[6] == 'Cancelled' and not cancelled_booking.found %}
+
+            {% set cancelled_booking.found = true %}
+            {% set cancelled_booking.id = booking[0] %}
+
+        {% endif %}
+
+    {% endfor %}
+
+
+    {% if cancelled_booking.found %}
+
+        <div class="alert-message">
+
+            ⚠️ Your booking #{{ cancelled_booking.id }}
+            has been cancelled because you did not attend
+            within 10 minutes.
+
+        </div>
+
     {% endif %}
-{% endfor %}
-
-{% if cancelled_booking.found %}
-    <div class="alert-message">
-        ⚠️ Your booking #{{ cancelled_booking.id }}
-        has been cancelled because you did not attend within 10 minutes.
-    </div>
-{% endif %}
-
-<table border="1" cellpadding="10">
 
 
-<h2>My Bookings</h2>
+    <!-- Booking Table -->
+
+    <table border="1" cellpadding="10">
+
+        <tr>
+
+            <th>Booking ID</th>
+
+            <th>Station Name</th>
+
+            <th>Date</th>
+
+            <th>Time</th>
+
+            <th>Vehicle Number</th>
+
+            <th>Status</th>
+
+            <th>Action</th>
+
+        </tr>
 
 
-<table border="1" cellpadding="10">
+        {% for booking in bookings %}
 
-<tr>
-    <th>Booking ID</th>
-    <th>Station Name</th>
-    <th>Date</th>
-    <th>Time</th>
-    <th>Vehicle Number</th>
-    <th>Status</th>
-    <th>Action</th>
-</tr>
+        <tr>
 
+            <td>{{ booking[0] }}</td>
 
-{% for booking in bookings %}
+            <td>{{ booking[2] }}</td>
 
-<tr>
+            <td>{{ booking[3] }}</td>
 
-    <td>{{ booking[0] }}</td>
+            <td>{{ booking[4] }}</td>
 
-    <td>{{ booking[2] }}</td>
-
-    <td>{{ booking[3] }}</td>
-
-    <td>{{ booking[4] }}</td>
-
-    <td>{{ booking[5] }}</td>
+            <td>{{ booking[5] }}</td>
 
 
-    <td>
+            <td>
 
-        {% if booking[6] == 'Booked' %}
+                {% if booking[6] == 'Booked' %}
 
-            <span style="color:green;font-weight:bold;">
-                {{ booking[6] }}
-            </span>
+                    <span class="booking-status booked">
+                        {{ booking[6] }}
+                    </span>
+
+                {% else %}
+
+                    <span class="booking-status cancelled">
+                        {{ booking[6] }}
+                    </span>
+
+                {% endif %}
+
+            </td>
+
+
+            <td>
+
+                {% if booking[6] == 'Booked' %}
+
+                    <!-- Cancel Button -->
+
+                    <a href="{{ url_for('cancel_booking', booking_id=booking[0]) }}"
+                       onclick="return confirmCancel();">
+
+                        <button type="button" class="cancel-btn">
+                            Cancel
+                        </button>
+
+                    </a>
+
+
+                    <!-- Review Button -->
+
+                    <a href="{{ url_for('review', station_id=booking[1]) }}">
+
+                        <button type="button" class="review-btn">
+                            Review
+                        </button>
+
+                    </a>
+
+                {% else %}
+
+                    <button type="button" disabled>
+                        Cancelled
+                    </button>
+
+                {% endif %}
+
+            </td>
+
+        </tr>
 
         {% else %}
 
-            <span style="color:red;font-weight:bold;">
-                {{ booking[6] }}
-            </span>
+        <tr>
 
-        {% endif %}
+            <td colspan="7">
+                No bookings found.
+            </td>
 
-    </td>
+        </tr>
 
+        {% endfor %}
 
-    <td>
+    </table>
 
-        {% if booking[6] == 'Booked' %}
-
-            <!-- Cancel Button -->
-            <a href="{{ url_for('cancel_booking', booking_id=booking[0]) }}"
-               onclick="return confirmCancel();">
-
-                <button type="button"
-                        style="background:red;color:white;">
-                    Cancel
-                </button>
-
-            </a>
-
-
-            <!-- Review Button -->
-            <a href="{{ url_for('review', station_id=booking[1]) }}">
-                <button type="button"
-                        style="background:green;color:white;">
-                    Review
-                </button>
-
-            </a>
-
-        {% else %}
-
-            <button type="button" disabled>
-                Cancelled
-            </button>
-
-        {% endif %}
-
-    </td>
-
-</tr>
-
-{% endfor %}
-
-</table>
+</div>
 
 
 <footer class="footer">
 
     <div class="footer-content">
+
 
         <div class="footer-section">
 
@@ -164,10 +222,21 @@
 
             <h3>Quick Links</h3>
 
-            <p><a href="/">Home</a></p>
-            <p><a href="/login">User Login</a></p>
-            <p><a href="/register">Register</a></p>
-            <p><a href="/admin_login">Admin Login</a></p>
+            <p>
+                <a href="/">Home</a>
+            </p>
+
+            <p>
+                <a href="/login">User Login</a>
+            </p>
+
+            <p>
+                <a href="/register">Register</a>
+            </p>
+
+            <p>
+                <a href="/admin_login">Admin Login</a>
+            </p>
 
         </div>
 
@@ -177,7 +246,9 @@
             <h3>Contact Us</h3>
 
             <p>📧 support@evfinder.com</p>
+
             <p>📞 +91 9876543210</p>
+
             <p>📍 Bengaluru, India</p>
 
         </div>
@@ -189,14 +260,15 @@
 
 
     <p class="copyright">
+
         © 2026 EV Charging Station Finder & Booking System |
         All Rights Reserved by Yashashwini R.
+
     </p>
 
 </footer>
 
 
-<!-- Cancel Confirmation -->
 <script>
 
 function confirmCancel() {
