@@ -305,12 +305,6 @@ def check_expired_bookings():
 
                     # Return charging slot
 
-                    job_cursor.execute("""
-                        UPDATE stations
-                        SET available_slots =
-                            available_slots + 1
-                        WHERE station_id = %s
-                    """, (station_id,))
 
 
                     connection.commit()
@@ -658,18 +652,16 @@ def book(station_id):
     if 'fullname' not in session:
         return redirect(url_for('login'))
 
-    # ==========================================
+    # ------------------------------------------------
     # GET STATION DETAILS
-    # ==========================================
+    # ------------------------------------------------
 
     cursor.execute("""
         SELECT
             available_slots,
-            station_name,
-            opening_time,
-            closing_time
+            station_name
         FROM stations
-        WHERE station_id=%s
+        WHERE station_id = %s
     """, (station_id,))
 
     station = cursor.fetchone()
@@ -680,26 +672,25 @@ def book(station_id):
 
     station_capacity = station[0]
     station_name = station[1]
-    opening_time = station[2]
-    closing_time = station[3]
 
-    # If timing is empty in database, use default timing
-    if opening_time is None:
-        opening_time = datetime.strptime(
-            "06:00",
-            "%H:%M"
-        ).time()
+    # ------------------------------------------------
+    # FIXED CHARGING HOURS
+    # 6:00 AM TO 8:00 PM
+    # ------------------------------------------------
 
-    if closing_time is None:
-        closing_time = datetime.strptime(
-            "20:00",
-            "%H:%M"
-        ).time()
+    opening_time = datetime.strptime(
+        "06:00",
+        "%H:%M"
+    ).time()
 
+    closing_time = datetime.strptime(
+        "20:00",
+        "%H:%M"
+    ).time()
 
-    # ==========================================
-    # ALLOWED 2-HOUR SLOTS
-    # ==========================================
+    # ------------------------------------------------
+    # FIXED 2-HOUR SLOTS
+    # ------------------------------------------------
 
     allowed_slots = [
         "06:00",
@@ -711,25 +702,33 @@ def book(station_id):
         "18:00"
     ]
 
-
-    # ==========================================
-    # BOOKING
-    # ==========================================
+    # ------------------------------------------------
+    # POST REQUEST
+    # ------------------------------------------------
 
     if request.method == 'POST':
 
-        vehicle_number = request.form.get('vehicle_number')
-        booking_date = request.form.get('booking_date')
-        booking_time = request.form.get('booking_time')
+        vehicle_number = request.form.get(
+            'vehicle_number'
+        )
 
+        booking_date = request.form.get(
+            'booking_date'
+        )
 
-        # ======================================
-        # CHECK EMPTY VALUES
-        # ======================================
+        booking_time = request.form.get(
+            'booking_time'
+        )
+
+        # ------------------------------------------------
+        # CHECK EMPTY FIELDS
+        # ------------------------------------------------
 
         if not vehicle_number or not booking_date or not booking_time:
 
-            flash("Please fill all booking details.")
+            flash(
+                "Please fill all booking details."
+            )
 
             return redirect(
                 url_for(
@@ -738,10 +737,9 @@ def book(station_id):
                 )
             )
 
-
-        # ======================================
-        # CHECK VALID 2-HOUR SLOT
-        # ======================================
+        # ------------------------------------------------
+        # CHECK VALID SLOT
+        # ------------------------------------------------
 
         if booking_time not in allowed_slots:
 
@@ -756,10 +754,9 @@ def book(station_id):
                 )
             )
 
-
-        # ======================================
-        # DATE + TIME VALIDATION
-        # ======================================
+        # ------------------------------------------------
+        # CONVERT DATE + TIME
+        # ------------------------------------------------
 
         try:
 
@@ -781,13 +778,15 @@ def book(station_id):
                 )
             )
 
+        # ------------------------------------------------
+        # CURRENT DATE AND TIME
+        # ------------------------------------------------
 
         current_datetime = datetime.now()
 
-
-        # ======================================
-        # PREVIOUS DATE / TIME
-        # ======================================
+        # ------------------------------------------------
+        # CHECK PREVIOUS DATE/TIME
+        # ------------------------------------------------
 
         if booking_datetime <= current_datetime:
 
@@ -802,10 +801,9 @@ def book(station_id):
                 )
             )
 
-
-        # ======================================
-        # 3 HOURS ADVANCE BOOKING
-        # ======================================
+        # ------------------------------------------------
+        # MINIMUM 3 HOURS ADVANCE BOOKING
+        # ------------------------------------------------
 
         minimum_booking_time = (
             current_datetime +
@@ -826,22 +824,23 @@ def book(station_id):
                 )
             )
 
+        # ------------------------------------------------
+        # CHECK CHARGING HOURS
+        # ------------------------------------------------
 
-        # ======================================
-        # STATION OPENING / CLOSING TIME
-        # ======================================
-
-        selected_time = booking_datetime.time()
+        booking_time_object = datetime.strptime(
+            booking_time,
+            "%H:%M"
+        ).time()
 
         if (
-            selected_time < opening_time
-            or selected_time >= closing_time
+            booking_time_object < opening_time
+            or booking_time_object >= closing_time
         ):
 
             flash(
-                "Booking is available only between "
-                f"{opening_time.strftime('%I:%M %p')} and "
-                f"{closing_time.strftime('%I:%M %p')}."
+                "Booking must be between "
+                "6:00 AM and 8:00 PM."
             )
 
             return redirect(
@@ -851,35 +850,42 @@ def book(station_id):
                 )
             )
 
-
-        # ======================================
-        # CHECK SAME SLOT BOOKINGS
-        # ======================================
+        # ------------------------------------------------
+        # CHECK WHETHER THIS EXACT SLOT IS ALREADY BOOKED
+        # ------------------------------------------------
+        #
+        # SAME:
+        #   STATION
+        #   DATE
+        #   TIME
+        #
+        # ONLY ONE VEHICLE CAN BOOK THIS SLOT.
+        # ------------------------------------------------
 
         cursor.execute("""
-            SELECT COUNT(*)
+            SELECT booking_id
             FROM bookings
-            WHERE station_id=%s
-            AND booking_date=%s
-            AND booking_time=%s
-            AND status='Booked'
+            WHERE station_id = %s
+            AND booking_date = %s
+            AND booking_time = %s
+            AND status = 'Booked'
+            LIMIT 1
         """, (
             station_id,
             booking_date,
             booking_time
         ))
 
-        booked_count = cursor.fetchone()[0]
+        existing_booking = cursor.fetchone()
 
+        # ------------------------------------------------
+        # SLOT ALREADY BOOKED
+        # ------------------------------------------------
 
-        # ======================================
-        # CHECK SLOT CAPACITY
-        # ======================================
-
-        if booked_count >= station_capacity:
+        if existing_booking:
 
             flash(
-                "This charging slot is full. "
+                "This time slot is already booked. "
                 "Please select another time slot."
             )
 
@@ -890,10 +896,9 @@ def book(station_id):
                 )
             )
 
-
-        # ======================================
-        # INSERT BOOKING
-        # ======================================
+        # ------------------------------------------------
+        # INSERT NEW BOOKING
+        # ------------------------------------------------
 
         cursor.execute("""
             INSERT INTO bookings
@@ -905,7 +910,15 @@ def book(station_id):
                 vehicle_number,
                 status
             )
-            VALUES (%s,%s,%s,%s,%s,'Booked')
+            VALUES
+            (
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                'Booked'
+            )
         """, (
             session['email'],
             station_id,
@@ -916,10 +929,9 @@ def book(station_id):
 
         db.commit()
 
-
-        # ======================================
-        # BOOKING CONFIRMATION EMAIL
-        # ======================================
+        # ------------------------------------------------
+        # SEND CONFIRMATION EMAIL
+        # ------------------------------------------------
 
         try:
 
@@ -937,10 +949,9 @@ def book(station_id):
                 e
             )
 
-
-        # ======================================
+        # ------------------------------------------------
         # SUCCESS MESSAGE
-        # ======================================
+        # ------------------------------------------------
 
         flash(
             "Booking Successful!"
@@ -950,10 +961,9 @@ def book(station_id):
             url_for('booking_history')
         )
 
-
-    # ==========================================
-    # SHOW BOOKING PAGE
-    # ==========================================
+    # ------------------------------------------------
+    # GET REQUEST
+    # ------------------------------------------------
 
     return render_template(
         'book.html',
@@ -1012,10 +1022,12 @@ def booking_history():
 # CANCEL BOOKING
 # =========================================================
 
-@app.route(
-    '/cancel_booking/<int:booking_id>'
-)
+@app.route('/cancel_booking/<int:booking_id>')
 def cancel_booking(booking_id):
+
+    # ------------------------------------------------
+    # CHECK LOGIN
+    # ------------------------------------------------
 
     if 'email' not in session:
 
@@ -1023,8 +1035,9 @@ def cancel_booking(booking_id):
             url_for('login')
         )
 
-
-    # CHECK BOOKING
+    # ------------------------------------------------
+    # GET BOOKING DETAILS
+    # ------------------------------------------------
 
     cursor.execute(
         """
@@ -1036,9 +1049,9 @@ def cancel_booking(booking_id):
             s.station_name
         FROM bookings b
         JOIN stations s
-        ON b.station_id = s.station_id
-        WHERE b.booking_id=%s
-        AND b.user_email=%s
+            ON b.station_id = s.station_id
+        WHERE b.booking_id = %s
+        AND b.user_email = %s
         """,
         (
             booking_id,
@@ -1046,9 +1059,11 @@ def cancel_booking(booking_id):
         )
     )
 
-
     booking = cursor.fetchone()
 
+    # ------------------------------------------------
+    # CHECK BOOKING EXISTS
+    # ------------------------------------------------
 
     if not booking:
 
@@ -1060,17 +1075,15 @@ def cancel_booking(booking_id):
             url_for('booking_history')
         )
 
-
     station_id = booking[0]
-
     status = booking[1]
-
     booking_date = booking[2]
-
     booking_time = booking[3]
-
     station_name = booking[4]
 
+    # ------------------------------------------------
+    # CHECK BOOKING STATUS
+    # ------------------------------------------------
 
     if status != 'Booked':
 
@@ -1082,16 +1095,17 @@ def cancel_booking(booking_id):
             url_for('booking_history')
         )
 
-
+    # ------------------------------------------------
     # CANCEL BOOKING
+    # ------------------------------------------------
 
     cursor.execute(
         """
         UPDATE bookings
-        SET status='Cancelled'
-        WHERE booking_id=%s
-        AND user_email=%s
-        AND status='Booked'
+        SET status = 'Cancelled'
+        WHERE booking_id = %s
+        AND user_email = %s
+        AND status = 'Booked'
         """,
         (
             booking_id,
@@ -1099,27 +1113,24 @@ def cancel_booking(booking_id):
         )
     )
 
-
-    # Only return the slot if the booking
-    # was successfully cancelled
+    # ------------------------------------------------
+    # CHECK WHETHER CANCELLATION WAS SUCCESSFUL
+    # ------------------------------------------------
 
     if cursor.rowcount == 1:
 
-        cursor.execute(
-            """
-            UPDATE stations
-            SET available_slots =
-                available_slots + 1
-            WHERE station_id=%s
-            """,
-            (station_id,)
-        )
-
+        # IMPORTANT:
+        # Do NOT update stations.available_slots.
+        #
+        # The station capacity remains unchanged.
+        # The cancelled time slot becomes available
+        # because its booking status is now 'Cancelled'.
 
         db.commit()
 
-
-        # SEND MANUAL CANCELLATION EMAIL
+        # ------------------------------------------------
+        # SEND CANCELLATION EMAIL
+        # ------------------------------------------------
 
         try:
 
@@ -1138,7 +1149,6 @@ def cancel_booking(booking_id):
                 e
             )
 
-
         flash(
             "Booking Cancelled Successfully!"
         )
@@ -1148,7 +1158,6 @@ def cancel_booking(booking_id):
         flash(
             "Booking could not be cancelled."
         )
-
 
     return redirect(
         url_for('booking_history')
