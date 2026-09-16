@@ -1,17 +1,16 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>My Bookings - EV Charging Station Finder</title>
+    <title>EV Charging Station Finder</title>
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 </head>
 
@@ -20,199 +19,190 @@
 <header class="header">
 
     <div class="logo">
+
         ⚡ EV Charging Station Finder
+
     </div>
 
     <nav>
+
         <a href="/">Home</a>
+
         <a href="/about">About</a>
+
         <a href="/features">Features</a>
+
         <a href="/contact">Contact</a>
+
     </nav>
 
     <div class="header-buttons">
+
         <a href="/login">Login</a>
+
         <a href="/register" class="register">Register</a>
+
     </div>
 
 </header>
 
 
-<div class="navbar">
+<h2>My Bookings</h2>
 
-    <a href="/dashboard">Dashboard</a>
+{% set cancelled_booking = namespace(found=false, id='') %}
 
-    <a href="/search_station">Search Station</a>
+{% for booking in bookings %}
 
-    <a href="/booking_history">My Bookings</a>
+    {% if booking[6] == 'Cancelled' and not cancelled_booking.found %}
 
-    <a href="{{ url_for('profile') }}">
-        <button type="button">Profile</button>
-    </a>
+        {% set cancelled_booking.found = true %}
 
-    <a href="/logout">Logout</a>
-
-</div>
-
-
-<div class="container">
-
-    <h2>My Bookings</h2>
-
-
-    <!-- Automatic Cancellation Message -->
-
-    {% set cancelled_booking = namespace(found=false, id='') %}
-
-    {% for booking in bookings %}
-
-        {% if booking[6] == 'Cancelled' and not cancelled_booking.found %}
-
-            {% set cancelled_booking.found = true %}
-            {% set cancelled_booking.id = booking[0] %}
-
-        {% endif %}
-
-    {% endfor %}
-
-
-    {% if cancelled_booking.found %}
-
-        <div class="alert-message">
-
-            ⚠️ Your booking #{{ cancelled_booking.id }}
-            has been cancelled because you did not attend
-            within 10 minutes.
-
-        </div>
+        {% set cancelled_booking.id = booking[0] %}
 
     {% endif %}
 
+{% endfor %}
 
-    <!-- Booking Table -->
+{% if cancelled_booking.found %}
 
-    <table border="1" cellpadding="10">
+    <div class="alert-message">
 
-        <tr>
+        ⚠️ Your booking #{{ cancelled_booking.id }}
 
-            <th>Booking ID</th>
+        has been cancelled because you did not attend within 10 minutes.
 
-            <th>Station Name</th>
+    </div>
 
-            <th>Date</th>
-
-            <th>Time</th>
-
-            <th>Vehicle Number</th>
-
-            <th>Status</th>
-
-            <th>Action</th>
-
-        </tr>
+{% endif %}
 
 
-        {% for booking in bookings %}
+<table border="1" cellpadding="10">
 
-        <tr>
+<tr>
 
-            <td>{{ booking[0] }}</td>
+    <th>Booking ID</th>
 
-            <td>{{ booking[2] }}</td>
+    <th>Station Name</th>
 
-            <td>{{ booking[3] }}</td>
+    <th>Date</th>
 
-            <td>{{ booking[4] }}</td>
+    <th>Time</th>
 
-            <td>{{ booking[5] }}</td>
+    <th>Vehicle Number</th>
 
+    <th>Status</th>
 
-            <td>
+    <th>Action</th>
 
-                {% if booking[6] == 'Booked' %}
-
-                    <span class="booking-status booked">
-                        {{ booking[6] }}
-                    </span>
-
-                {% else %}
-
-                    <span class="booking-status cancelled">
-                        {{ booking[6] }}
-                    </span>
-
-                {% endif %}
-
-            </td>
+</tr>
 
 
-            <td>
+{% for booking in bookings %}
 
-                {% if booking[6] == 'Booked' %}
+<tr>
 
-                    <!-- Cancel Button -->
+    <td>{{ booking[0] }}</td>
 
-                    <a href="{{ url_for('cancel_booking', booking_id=booking[0]) }}"
-                       onclick="return confirmCancel();">
+    <td>{{ booking[2] }}</td>
 
-                        <button type="button" class="cancel-btn">
-                            Cancel
-                        </button>
+    <td>{{ booking[3] }}</td>
 
-                    </a>
+    <td>{{ booking[4] }}</td>
+
+    <td>{{ booking[5] }}</td>
 
 
-                    <!-- Review Button -->
+    <td>
 
-                    <a href="{{ url_for('review', station_id=booking[1]) }}">
+        {% if booking[6] == 'Booked' %}
 
-                        <button type="button" class="review-btn">
-                            Review
-                        </button>
+            <span style="color:green;font-weight:bold;">
 
-                    </a>
+                {{ booking[6] }}
 
-                {% else %}
-
-                    <button type="button" disabled>
-                        Cancelled
-                    </button>
-
-                {% endif %}
-
-            </td>
-
-        </tr>
+            </span>
 
         {% else %}
 
-        <tr>
+            <span style="color:red;font-weight:bold;">
 
-            <td colspan="7">
-                No bookings found.
-            </td>
+                {{ booking[6] }}
 
-        </tr>
+            </span>
 
-        {% endfor %}
+        {% endif %}
 
-    </table>
+    </td>
 
-</div>
+
+    <td>
+
+        {% if booking[6] == 'Booked' %}
+
+            <!-- Cancel Button -->
+
+            <a href="{{ url_for('cancel_booking', booking_id=booking[0]) }}"
+
+               onclick="return confirmCancel();">
+
+                <button type="button"
+
+                        style="background:red;color:white;">
+
+                    Cancel
+
+                </button>
+
+            </a>
+
+
+            <!-- Review Button -->
+
+            <a href="{{ url_for('review', station_id=booking[1]) }}">
+
+                <button type="button"
+
+                        style="background:green;color:white;">
+
+                    Review
+
+                </button>
+
+            </a>
+
+        {% else %}
+
+            <button type="button" disabled>
+
+                Cancelled
+
+            </button>
+
+        {% endif %}
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</table>
 
 
 <footer class="footer">
 
     <div class="footer-content">
 
-
         <div class="footer-section">
 
             <h3>EV Charging Station Finder</h3>
 
             <p>
+
                 Helping EV owners find nearby charging stations,
+
                 book slots online and save time.
+
             </p>
 
         </div>
@@ -222,21 +212,13 @@
 
             <h3>Quick Links</h3>
 
-            <p>
-                <a href="/">Home</a>
-            </p>
+            <p><a href="/">Home</a></p>
 
-            <p>
-                <a href="/login">User Login</a>
-            </p>
+            <p><a href="/login">User Login</a></p>
 
-            <p>
-                <a href="/register">Register</a>
-            </p>
+            <p><a href="/register">Register</a></p>
 
-            <p>
-                <a href="/admin_login">Admin Login</a>
-            </p>
+            <p><a href="/admin_login">Admin Login</a></p>
 
         </div>
 
@@ -262,6 +244,7 @@
     <p class="copyright">
 
         © 2026 EV Charging Station Finder & Booking System |
+
         All Rights Reserved by Yashashwini R.
 
     </p>
@@ -269,12 +252,16 @@
 </footer>
 
 
+<!-- Cancel Confirmation -->
+
 <script>
 
 function confirmCancel() {
 
     return confirm(
+
         "Are you sure you want to cancel this booking?"
+
     );
 
 }
@@ -283,4 +270,5 @@ function confirmCancel() {
 
 
 </body>
+
 </html>
